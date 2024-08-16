@@ -18,13 +18,9 @@ class Logger:
     _error_limit = 5
     _error_interval = 60  # Interval in seconds to consider errors for the limit
 
-    _skipping = 0
-
     @staticmethod
     def _should_update(message: str) -> bool:
-        """
-        Check if the message should update the existing message based on time interval.
-        """
+        """Check if the message should update the existing message based on time interval."""
         current_time = time.time()
         if (
             message == Logger._last_message
@@ -35,29 +31,23 @@ class Logger:
         Logger._last_time = current_time
         return True
 
-    def skipping_msg() -> None:
-        """ """
-        Logger._skipping += 1
-        if Logger._skipping % 10 == 0:  # Print a message every 10 skips
-            Logger.warning(f"Skipping download. Total skipped: {Logger._skipping}.")
-
     @staticmethod
     def info(message: str) -> None:
         """Print an informational message."""
         if Logger._should_update(message):
-            console.print(f"[cyan]{message}[/]")  # Cyan color
+            console.print(f"[bold cyan]{message}[/]")  # Cyan color
 
     @staticmethod
     def success(message: str) -> None:
         """Print a success message."""
         if Logger._should_update(message):
-            console.print(f"[green]{message}[/]")  # Green color
+            console.print(f"[bold green]{message}[/]")  # Green color
 
     @staticmethod
     def warning(message: str) -> None:
         """Print a warning message."""
         if Logger._should_update(message):
-            console.print(f"[yellow]{message}[/]")  # Yellow color
+            console.print(f"[bold yellow]{message}[/]")  # Yellow color
 
     @staticmethod
     def error(message: str) -> None:
@@ -71,7 +61,7 @@ class Logger:
             Logger._shutdown_program(f"Too many errors encountered. Shutting down.")
         else:
             if Logger._should_update(message):
-                console.print(f"[red]{message}[/]")  # Red color
+                console.print(f"[bold red]{message}[/]")  # Red color
 
     @staticmethod
     def _shutdown_program(message: str) -> None:

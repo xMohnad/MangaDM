@@ -1,6 +1,6 @@
 # MangaDM - Manga Download Manager
 
-**MangaDM** is a command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file, with options to limit the number of chapters, re-download files, and clean up the JSON data.
+**MangaDM** is a command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file.
 
 ## Installation
 
@@ -25,7 +25,7 @@ To install the MangaDM, you need to have Python installed on your system. You ca
 If you have a `.tar.gz` file, you can install it using `pip`:
 
 ```sh
-pip install dist/MangaDM-0.1.tar.gz
+pip install dist/MangaDM-0.2.tar.gz
 ```
 
 ## Usage
@@ -78,14 +78,14 @@ You can also use MangaDM as a Python library. Here’s how you can use it progra
 ### Example Usage
 
 ```python
-from MangaDM import MangaDM
+from manga_dm import MangaDM
 
 # Create an instance of MangaDM with desired parameters
 manga_dm = MangaDM(
     json_file="path/to/yourfile.json",
     dest_path="path/to/chapter",
     chapters_limit=1,
-    delete_if_success=False,
+    delete_on_success=False,
     force_download=False,
 )
 
@@ -99,7 +99,7 @@ manga_dm.start()
 -   `dest_path` (str): The destination path where manga chapters will be downloaded. Defaults to the current directory.
 -   `chapters_limit` (int): Number of chapters to download. If -1, download all chapters. Defaults to -1.
 -   `force_download` (bool): If True, re-download files even if they exist. Defaults to False.
--   `delete_if_success` (bool): If True, delete chapter data from JSON after successful download. Defaults to False.
+-   `delete_on_success` (bool): If True, delete chapter data from JSON after successful download. Defaults to False.
 
 ## Example JSON Structure
 
@@ -116,6 +116,17 @@ Here’s an example of the JSON structure required for the input file:
             "https://example.com/image2.jpg",
             "https://example.com/image3.jpg"
         ]
+    },
+    {
+        "manganame": "Boruto",
+        "cover": "https://example.com/cover.jpg",
+        "title": "Boruto - 7",
+        "images": [
+            "https://example.com/image1.jpg",
+            "https://example.com/image2.jpg",
+            "https://example.com/image3.jpg"
+        ]
     }
+    // ....
 ]
 ```
