@@ -1,6 +1,8 @@
-import sys, time
+import signal
+import time
 from rich.console import Console
-
+from rich.panel import Panel
+from rich.text import Text
 
 console = Console()
 
@@ -16,7 +18,7 @@ class Logger:
 
     _error_count = 0
     _error_limit = 5
-    _error_interval = 60  # Interval in seconds to consider errors for the limit
+    _error_interval = 30  # Interval in seconds to consider errors for the limit
 
     @staticmethod
     def _should_update(message: str) -> bool:
@@ -50,9 +52,12 @@ class Logger:
             console.print(f"[bold yellow]{message}[/]")  # Yellow color
 
     @staticmethod
-    def error(message: str) -> None:
+    def error(
+        message: str, enhanced: bool = True, count: bool = True, red: bool = False
+    ) -> None:
         """Print an error message and check if the error threshold is reached."""
-        Logger._error_count += 1
+        if count:
+            Logger._error_count += 1
         current_time = time.time()
         if (
             Logger._error_count > Logger._error_limit
@@ -61,10 +66,20 @@ class Logger:
             Logger._shutdown_program(f"Too many errors encountered. Shutting down.")
         else:
             if Logger._should_update(message):
-                console.print(f"[bold red]{message}[/]")  # Red color
+                if enhanced:
+                    timestamp = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
+                    error_text = Text(f" {message}", style="bold red", justify="center")
+                    error_text.stylize("underline")
+                    console.print(
+                        Panel(error_text, title=timestamp, border_style="bright_red")
+                    )
+                elif red:
+                    console.print(f"[bold red]{message}[/]")
+                else:
+                    console.print(message)
 
     @staticmethod
     def _shutdown_program(message: str) -> None:
         """Shutdown the program with a message."""
         console.print(f"[red]{message}[/]")  # Red color
-        sys.exit(1)
+        signal.raise_signal(signal.SIGTERM)

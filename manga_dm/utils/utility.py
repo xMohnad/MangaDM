@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 import os
 from urllib.parse import urlparse, unquote
 from .logger import Logger
+import glob
 
 from rich.progress import (
     Progress,
@@ -99,135 +100,25 @@ class Utility:
             return []
 
     @staticmethod
+    def check_if_chapters_downloaded(folder: str, images: list) -> None:
+        """
+        Check if all images are downloaded in the given folder.
+
+        :param folder: Directory where images are expected to be located.
+        :param images: List of expected image file names.
+        """
+        if os.path.isdir(folder):  # Ensure that the folder exists
+            # Check for temporary files in the folder
+            temp_files_exist = glob.glob(os.path.join(folder, "*_temp"))
+            # Check if all images are downloaded (i.e., no temporary files and number of images matches)
+            if not temp_files_exist and len(images) == len(os.listdir(folder)):
+                return True
+        return False
+
+    @staticmethod
     def save_data(file_path: str, data: List[Dict[str, Any]]) -> None:
         try:
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)
         except Exception as e:
             Logger.error(f"Failed to save data to JSON file {file_path}: {e}")
-
-
-class StatsManager:
-    """Manages the statistics for downloads and chapters."""
-
-    def __init__(self) -> None:
-        self.success_count = 0
-        self.failure_count = 0
-        self.skipped_count = 0
-        self.chapters_downloaded = 0
-        self.skipped_chapters = 0
-        self.total_chapters = 0
-        self.all_images_downloaded = True
-
-        self.print_skip_msg = True
-
-    def update_success(self) -> None:
-        self.success_count += 1
-
-    def update_failure(self) -> None:
-        self.failure_count += 1
-
-    def update_skipped(self) -> None:
-        self.skipped_count += 1
-
-    def update_chapters_downloaded(self) -> None:
-        self.chapters_downloaded += 1
-
-    def update_skipped_chapters(self) -> None:
-        self.skipped_chapters += 1
-
-    def set_total_chapters(self, total_chapters) -> None:
-        self.total_chapters = total_chapters
-
-    def skip_msg(self) -> None:
-
-        messages = []
-
-        if self.skipped_count > 0:
-            if self.skipped_count == 1:
-                messages.append("Skipped downloading 1 image.")
-            else:
-                messages.append(f"Skipped downloading {self.skipped_count} images.")
-
-        if self.skipped_chapters > 0:
-            if self.skipped_chapters == 1:
-                messages.append("Skipped downloading 1 chapter.")
-            else:
-                messages.append(
-                    f"Skipped downloading {self.skipped_chapters} chapters."
-                )
-
-        if messages and self.print_skip_msg:
-            Logger.warning(" | ".join(messages))
-
-    def log_download_results(self) -> None:
-        # Handling image download results
-        image_success_message = (
-            "No images were successfully downloaded."
-            if self.success_count == 0
-            else (
-                f"Successfully downloaded 1 image."
-                if self.success_count == 1
-                else f"Successfully downloaded {self.success_count} images."
-            )
-        )
-
-        image_failure_message = (
-            "No images failed to download."
-            if self.failure_count == 0
-            else (
-                f"Failed to download 1 image."
-                if self.failure_count == 1
-                else f"Failed to download {self.failure_count} images."
-            )
-        )
-
-        image_skipped_message = (
-            "No images were skipped."
-            if self.skipped_count == 0
-            else (
-                f"Skipped downloading 1 image."
-                if self.skipped_count == 1
-                else f"Skipped downloading {self.skipped_count} images."
-            )
-        )
-
-        # Handling chapter download results
-        chapter_total_message = f"Total chapters: {self.total_chapters}"
-
-        chapter_downloaded_message = (
-            "No chapters were fully downloaded."
-            if self.chapters_downloaded == 0
-            else (
-                f"Completely downloaded 1 chapter."
-                if self.chapters_downloaded == 1
-                else f"Completely downloaded {self.chapters_downloaded} chapters."
-            )
-        )
-
-        chapter_skipped_message = (
-            "No chapters were skipped."
-            if self.skipped_chapters == 0
-            else (
-                f"Skipped downloading 1 chapter."
-                if self.skipped_chapters == 1
-                else f"Skipped downloading {self.skipped_chapters} chapters."
-            )
-        )
-
-        # Printing the formatted result
-        message = (
-            f"{image_success_message}\n{image_failure_message}\n{image_skipped_message}\n"
-            f"{chapter_total_message}\n{chapter_downloaded_message}\n{chapter_skipped_message}\n"
-        )
-        Logger.info(message)
-
-    def get_statistics(self) -> dict:
-        return {
-            "success": self.success_count,
-            "failure": self.failure_count,
-            "skipped": self.skipped_count,
-            "total_chapters": self.total_chapters,
-            "chapters_downloaded": self.chapters_downloaded,
-            "skipped_chapters": self.skipped_chapters,
-        }

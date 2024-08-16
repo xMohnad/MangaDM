@@ -17,7 +17,7 @@ To install the MangaDM, you need to have Python installed on your system. You ca
 
 2. Install the tool:
     ```sh
-    pip install .
+    pip install -e .
     ```
 
 ### Install from Distribution Package
@@ -25,51 +25,92 @@ To install the MangaDM, you need to have Python installed on your system. You ca
 If you have a `.tar.gz` file, you can install it using `pip`:
 
 ```sh
-pip install dist/MangaDM-0.2.tar.gz
+pip install dist/MangaDM-x.x.tar.gz
+```
+
+-   or `.whl`
+
+```sh
+pip install dist/MangaDM-x.x-py3-none-any.whl
 ```
 
 ## Usage
 
-Once installed, you can use the `manga-dm` command to download manga chapters. Here are the available options:
+Once installed, you can use the `manga-dm` command to download manga chapters. Here are the available options
 
-### Basic Command
-
-To start downloading manga chapters, use:
+### Example Commands
 
 ```sh
-manga-dm path/to/yourfile.json
+manga-dm [OPTIONS] [JSON_FILE]
 ```
+
+#### Basic Usage
+
+```sh
+manga-dm /path/to/manga.json
+```
+
+This command will download all chapters specified in the `manga.json` file to the current directory.
+
+#### Specify Destination Path
+
+```sh
+manga-dm /path/to/manga.json --dest /path/to/save
+```
+
+This command will download all chapters to the specified destination path.
+
+#### Limit Number of Chapters
+
+```sh
+manga-dm /path/to/manga.json --limit 10
+```
+
+This command will download only the first 10 chapters.
+
+#### Force Re-download of Existing Files
+
+```sh
+manga-dm /path/to/manga.json --force
+```
+
+This command will re-download files even if they already exist.
+
+#### Delete Data After Successful Download
+
+```sh
+manga-dm /path/to/manga.json --delete
+```
+
+This command will delete the chapter data from the JSON file after a successful download.
+
+#### Set and Save Default Settings
+
+To set and save your current settings as the default, use the `--set-defaults` option:
+
+```sh
+manga-dm /path/to/manga.json --dest /path/to/save --limit 10 --force --delete --set-defaults
+```
+
+This command will save the current settings (destination path, chapter limit, force re-download, delete on success) as the default for future downloads.
 
 ### Options
 
--   `--dest` or `-p`: Specify the destination path for downloading manga chapters. Defaults to the current directory.
-
-    ```sh
-    manga-dm path/to/yourfile.json --dest /path/to/destination
-    ```
-
--   `--limit` or `-l`: Specify the number of chapters to download. If set to -1, all chapters will be downloaded. Defaults to -1.
-
-    ```sh
-    manga-dm path/to/yourfile.json --limit 10
-    ```
-
--   `--force` or `-f`: Force re-download of files even if they already exist.
-
-    ```sh
-    manga-dm path/to/yourfile.json --force
-    ```
-
--   `--delete` or `-d`: Delete chapter data from the JSON file after successful download. This will remove the downloaded chapters from the JSON file.
-
-    ```sh
-    manga-dm path/to/yourfile.json --delete
-    ```
-
+-   `--dest` or `-p`: Destination path for downloading manga chapters. Default is the current directory.
+-   `--limit` or `-l`: Number of chapters to download. If `-1`, download all chapters. Default is `-1`.
+-   `--force` or `-f`: Re-download files even if they exist.
+-   `--delete` or `-d`: Delete chapter data from JSON after successful download.
+-   `--set-defaults` or `-s`: Save the current settings as default.
 -   `--example` or `-e`: Display an example JSON structure for the input file.
-    ```sh
-    manga-dm --example
-    ```
+-   `--help` or `-h`: Show this message and exit.
+
+### Example JSON Structure
+
+If you want to see an example of the expected JSON structure for the input file, you can use the `--example` option:
+
+```sh
+manga-dm --example
+```
 
 ## Using MangaDM as a Library
 
@@ -130,3 +171,7 @@ Here’s an example of the JSON structure required for the input file:
     // ....
 ]
 ```
+
+## Contributing
+
+If you'd like to contribute to this project, feel free to fork the repository and submit a pull request. Any improvements or bug fixes are welcome!
