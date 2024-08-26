@@ -1,10 +1,11 @@
 import json
 from typing import Any, Dict, List, Optional
 import os
+import zipfile
 from urllib.parse import urlparse, unquote
 from .logger import Logger
-import glob
-
+import platform
+import shutil
 from rich.progress import (
     Progress,
     BarColumn,
@@ -100,20 +101,35 @@ class Utility:
             return []
 
     @staticmethod
-    def check_if_chapters_downloaded(folder: str, images: list) -> None:
-        """
-        Check if all images are downloaded in the given folder.
+    def isdownloaded_chapter(folder: str, temp_folder: str, images: list) -> bool:
+        """Check if chapter downloaded"""
+        folder_name = os.path.basename(folder.rstrip("/\\"))
+        cbz_file = os.path.join(os.path.dirname(folder), f"{folder_name}.cbz")
+        
 
-        :param folder: Directory where images are expected to be located.
-        :param images: List of expected image file names.
-        """
-        if os.path.isdir(folder):  # Ensure that the folder exists
-            # Check for temporary files in the folder
-            temp_files_exist = glob.glob(os.path.join(folder, "*_temp"))
-            # Check if all images are downloaded (i.e., no temporary files and number of images matches)
-            if not temp_files_exist and len(images) == len(os.listdir(folder)):
+        if not os.path.isdir(temp_folder):
+            if os.path.isfile(cbz_file) or (
+                os.path.isdir(folder) and len(images) == len(os.listdir(folder))
+            ):
                 return True
+
         return False
+
+    @staticmethod
+    def create_cbz(folder_path: str):
+        folder_name = os.path.basename(folder_path.rstrip("/\\"))
+        cbz_file = os.path.join(os.path.dirname(folder_path), f"{folder_name}.cbz")
+    
+        with zipfile.ZipFile(cbz_file, "w") as cbz:
+            for root, _, files in os.walk(folder_path):
+                for file in sorted(files):
+                    file_path = os.path.join(root, file)
+                    cbz.write(file_path, os.path.relpath(file_path, folder_path))
+
+        try:
+            shutil.rmtree(folder_path)
+        except Exception as e:
+            Logger.error(f"Error `{folder_name}.cbz`: {e}")
 
     @staticmethod
     def save_data(file_path: str, data: List[Dict[str, Any]]) -> None:
@@ -122,3 +138,35 @@ class Utility:
                 json.dump(data, file, ensure_ascii=False, indent=4)
         except Exception as e:
             Logger.error(f"Failed to save data to JSON file {file_path}: {e}")
+
+    @staticmethod
+    def get_config_path():
+        """Get the path to the configuration file, supports both Linux and Windows."""
+        if platform.system() == "Windows":
+            config_dir = os.path.join(os.getenv("APPDATA"), "manga_dm")
+        else:
+            config_dir = os.path.expanduser("~/.config/manga_dm")
+
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+
+        return os.path.join(config_dir, "config.json")
+
+    @staticmethod
+    def load_default_settings():
+        """Load default settings from the config file."""
+        config_path = Utility.get_config_path()
+        if os.path.exists(config_path):
+            with open(config_path, "r") as config_file:
+                return json.load(config_file)
+        return {}
+
+    @staticmethod
+    def save_default_settings(settings):
+        """Save default settings to the config file."""
+        config_path = Utility.get_config_path()
+        try:
+            with open(config_path, "w", encoding="utf-8") as config_file:
+                json.dump(settings, config_file, ensure_ascii=False, indent=4)
+        except Exception as e:
+            Logger.error(f"Failed to save config to JSON file {config_path}: {e}")

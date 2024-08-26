@@ -49,12 +49,6 @@ class StatsManager:
 
         messages = []
 
-        if self.skipped_count > 0:
-            if self.skipped_count == 1:
-                messages.append("Skipped downloading 1 image.")
-            else:
-                messages.append(f"Skipped downloading {self.skipped_count} images.")
-
         if self.skipped_chapters > 0:
             if self.skipped_chapters == 1:
                 messages.append("Skipped downloading 1 chapter.")
@@ -62,6 +56,12 @@ class StatsManager:
                 messages.append(
                     f"Skipped downloading {self.skipped_chapters} chapters."
                 )
+
+        if self.skipped_count > 0:
+            if self.skipped_count == 1:
+                messages.append("Skipped downloading 1 image.")
+            else:
+                messages.append(f"Skipped downloading {self.skipped_count} images.")
 
         if messages and self.print_skip_msg:
             Logger.warning(" | ".join(messages))
@@ -101,6 +101,9 @@ class StatsManager:
         # Handling chapter download results
         chapter_total_message = f"Total chapters: {self.total_chapters}"
 
+        chapter_remainin = self.total_chapters - (self.chapters_downloaded + self.skipped_chapters)
+        chapter_remaining_message = f"Remaining chapters: {chapter_remainin}"
+
         chapter_downloaded_message = (
             "No chapters were fully downloaded."
             if self.chapters_downloaded == 0
@@ -131,6 +134,7 @@ class StatsManager:
         table.add_row(f"[cyan]{chapter_total_message}[/cyan]")
         table.add_row(f"[green]{chapter_downloaded_message}[/green]")
         table.add_row(f"[yellow]{chapter_skipped_message}[/yellow]")
+        table.add_row(f"[cyan]{chapter_remaining_message}[/cyan]")
 
         # Print the table
         console.print(table)

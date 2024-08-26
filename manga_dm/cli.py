@@ -2,36 +2,7 @@ from manga_dm import MangaDM
 import click
 import json
 import os
-import platform
-
-
-def get_config_path():
-    """Get the path to the configuration file, supports both Linux and Windows."""
-    if platform.system() == "Windows":
-        config_dir = os.path.join(os.getenv("APPDATA"), "manga_dm")
-    else:
-        config_dir = os.path.expanduser("~/.config/manga_dm")
-
-    if not os.path.exists(config_dir):
-        os.makedirs(config_dir)
-
-    return os.path.join(config_dir, "config.json")
-
-
-def load_default_settings():
-    """Load default settings from the config file."""
-    config_path = get_config_path()
-    if os.path.exists(config_path):
-        with open(config_path, "r") as config_file:
-            return json.load(config_file)
-    return {}
-
-
-def save_default_settings(settings):
-    """Save default settings to the config file."""
-    config_path = get_config_path()
-    with open(config_path, "w") as config_file:
-        json.dump(settings, config_file, indent=4)
+from manga_dm.utils import Utility
 
 
 @click.command()
@@ -62,6 +33,12 @@ def save_default_settings(settings):
     help="Delete chapter data from JSON after successful download.",
 )
 @click.option(
+    "--cbz",
+    "-z",
+    is_flag=True,
+    help="Save the chapter as CBZ.",
+)
+@click.option(
     "--example",
     "-e",
     is_flag=True,
@@ -74,17 +51,18 @@ def save_default_settings(settings):
     help="Save the current settings as default.",
 )
 @click.help_option("--help", "-h")
-def cli(json_file, dest, limit, force, delete, example, set_defaults):
+def cli(json_file, dest, limit, force, delete, cbz, example, set_defaults):
     """A command-line tool for downloading manga chapters based on a JSON file."""
 
     # Load existing default settings
-    default_settings = load_default_settings()
+    default_settings = Utility.load_default_settings()
 
     # Merge CLI options with default settings
     dest = dest or default_settings.get("dest", ".")
     limit = limit if limit is not None else default_settings.get("limit", -1)
     force = force or default_settings.get("force", False)
     delete = delete or default_settings.get("delete", False)
+    cbz = cbz or default_settings.get("cbz", False)
 
     # Display example JSON
     if example:
@@ -120,8 +98,9 @@ def cli(json_file, dest, limit, force, delete, example, set_defaults):
             "limit": limit,
             "force": force,
             "delete": delete,
+            "cbz": cbz,
         }
-        save_default_settings(new_defaults)
+        Utility.save_default_settings(new_defaults)
         click.echo("Default settings saved.")
         return
 
@@ -140,6 +119,7 @@ def cli(json_file, dest, limit, force, delete, example, set_defaults):
         chapters_limit=limit,
         force_download=force,
         delete_on_success=delete,
+        save_as_CBZ=cbz,
     )
 
     manga_downloader.start()

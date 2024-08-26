@@ -18,9 +18,11 @@ class MangaDM:
         chapters_limit: int = -1,
         force_download: bool = False,
         delete_on_success: bool = False,
+        save_as_CBZ: bool = False,
     ) -> None:
         self.dest_path = dest_path
         self.json_file = json_file
+        self.save_as_CBZ = save_as_CBZ
         self.data = Utility.load_data(json_file)
         self.chapters_limit = chapters_limit
         self.force_download = force_download
@@ -70,7 +72,7 @@ class MangaDM:
 
         self.setup_manga_dir_with_cover(base_folder)
 
-        for count, entry in enumerate(self.data, start=1):
+        for count, entry in enumerate(self.data[:], start=1):
             if self._should_stop_processing():
                 break
 
@@ -79,14 +81,15 @@ class MangaDM:
                 Logger.error("No images available to download.")
                 continue
 
-            title = entry.get("title", "UnknownChapter").replace("/", "_")
+            title: str = entry.get("title", "UnknownChapter").replace("/", "_")
             folder = os.path.join(base_folder, title)
+            temp_folder = os.path.join(base_folder, f"{title}_tamp")
 
-            if Utility.check_if_chapters_downloaded(folder, images):
+            if Utility.isdownloaded_chapter(folder, temp_folder, images):
                 self.stats_manager.update_skipped_chapters()
                 continue
 
-            self._download_chapter_images(folder, images, count, entry)
+            self._download_chapter_images(folder, temp_folder, images, count, entry)
 
         self.stats_manager.log_download_results()
 
@@ -97,10 +100,11 @@ class MangaDM:
         )
 
     def _download_chapter_images(
-        self, folder: str, images: List[str], count: int, entry: dict
+        self, folder: str, temp_folder: str, images: List[str], count: int, entry: dict
     ) -> None:
+
         downloader = Downloader(
-            dest_path=folder,
+            dest_path=temp_folder,
             force_download=self.force_download,
             session=self.session,
             stats_manager=self.stats_manager,
@@ -111,6 +115,12 @@ class MangaDM:
 
         if self.stats_manager.get_statistics()["failure_chapter"]:
             self.stats_manager.all_images_downloaded = False
+
+        if self.stats_manager.all_images_downloaded:
+            os.rename(temp_folder, folder)
+
+        if self.stats_manager.all_images_downloaded and self.save_as_CBZ:
+            Utility.create_cbz(folder)
 
         if self.stats_manager.all_images_downloaded and self.delete_on_success:
             self.data.remove(entry)

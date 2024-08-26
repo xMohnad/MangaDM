@@ -17,7 +17,7 @@ class Logger:
     )
 
     _error_count = 0
-    _error_limit = 5
+    _error_limit = 3
     _error_interval = 30  # Interval in seconds to consider errors for the limit
 
     @staticmethod
