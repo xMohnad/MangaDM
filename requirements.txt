@@ -1,3 +1,5 @@
 requests
 click
 rich
+InquirerPy
+click-completion

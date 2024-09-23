@@ -17,7 +17,7 @@ class Logger:
     )
 
     _error_count = 0
-    _error_limit = 3
+    _error_limit = 2
     _error_interval = 30  # Interval in seconds to consider errors for the limit
 
     @staticmethod
@@ -46,14 +46,19 @@ class Logger:
             console.print(f"[bold green]{message}[/]")  # Green color
 
     @staticmethod
-    def warning(message: str) -> None:
+    def warning(message: str, enhanced: bool = False) -> None:
         """Print a warning message."""
         if Logger._should_update(message):
-            console.print(f"[bold yellow]{message}[/]")  # Yellow color
+            if enhanced:
+                warning_text = Text(message, style="bold yellow", justify="center")
+                warning_text.stylize("underline")
+                console.print(Panel(warning_text, title="[bold red]Warning[/]", border_style="bright_yellow"))
+            else:
+                console.print(f"[bold yellow]{message}[/]")  # Yellow color
 
     @staticmethod
     def error(
-        message: str, enhanced: bool = True, count: bool = True, red: bool = False
+        message: str, enhanced: bool = True, count: bool = True, red: bool = False, close: bool = False
     ) -> None:
         """Print an error message and check if the error threshold is reached."""
         if count:
@@ -63,12 +68,12 @@ class Logger:
             Logger._error_count > Logger._error_limit
             and (current_time - Logger._last_time) < Logger._error_interval
         ):
-            Logger._shutdown_program(f"Too many errors encountered. Shutting down.")
+            Logger._shutdown_program("\nToo many errors encountered. Shutting down.")
         else:
             if Logger._should_update(message):
                 if enhanced:
                     timestamp = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
-                    error_text = Text(f" {message}", style="bold red", justify="center")
+                    error_text = Text(message, style="bold red", justify="center")
                     error_text.stylize("underline")
                     console.print(
                         Panel(error_text, title=timestamp, border_style="bright_red")
@@ -77,6 +82,8 @@ class Logger:
                     console.print(f"[bold red]{message}[/]")
                 else:
                     console.print(message)
+        if close:
+            signal.raise_signal(signal.SIGTERM)
 
     @staticmethod
     def _shutdown_program(message: str) -> None:
