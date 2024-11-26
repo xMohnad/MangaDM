@@ -25,13 +25,13 @@ To install the MangaDM, you need to have Python installed on your system. You ca
 If you have a `.tar.gz` file, you can install it using `pip`:
 
 ```sh
-pip install dist/MangaDM-x.x.tar.gz
+pip install dist/MangaDM*.tar.gz
 ```
 
 -   or `.whl`
 
 ```sh
-pip install dist/MangaDM-x.x-py3-none-any.whl
+pip install dist/MangaDM*py3-none-any.whl
 ```
 
 ## Usage
@@ -84,13 +84,6 @@ mangadm /path/to/manga.json --delete
 
 This command will delete the chapter data from the JSON file after a successful download.
 
-#### Download and Save as CBZ
-
-```sh
-mangadm /path/to/manga.json --cbz
-```
-
-This command will download the chapters and save them in CBZ format.
 
 #### Enable Transient Mode
 
@@ -99,7 +92,6 @@ mangadm /path/to/manga.json --transient
 ```
 
 This command will enable transient mode, where progress indicators are not persisted after the download process completes.
-
 
 #### Set and Save Default Settings
 
@@ -118,22 +110,13 @@ mangadm /path/to/manga.json --dest /path/to/save --limit 10 --no-force --no-dele
 This command will save the current settings (destination path, chapter limit, force re-download, delete on success) as the default for future downloads.
 
 
-#### Open Configuration UI
+### Example JSON Structure
+
+If you want to see an example of the expected JSON structure for the input file, you can use the `--example` option:
 
 ```sh
-mangadm --configure
-```
-
-This command will open a text-based user interface (UI) that allows you to set up or change your settings interactively.
-
-#### View Current Settings
-
-```sh
-mangadm --settings
-```
-
-This command will display the current default settings.
-
+mangadm --example
+``` 
 
 ### Options
 
@@ -141,21 +124,14 @@ This command will display the current default settings.
 -   `--limit` or `-l`: Number of chapters to download. If `-1`, download all chapters. Default is `-1`.
 -   `--force/--no-force` or `-f`: Re-download chapter if not complete.
 -   `--delete/--no-delete` or `-d`: Delete chapter data from JSON after successful download.
--   `--cbz/--no-cbz` or `-z`: when enabled, saves the downloaded chapters in `CBZ` format.
+-   `format` or `-m` [cbz|epub]: The format in which to save the downloaded manga. Can be either `"cbz"` for a comic book archive or `"epub"` for an e-book file. Defaults to `"cbz"`.
 -   `--transient/--no-transient` or `-t`: Activate transient mode (progress bar will disappear after completion).
--   `--set-settings` or `-s`: Save the current settings as default.
 -   `--example` or `-e`: Display an example JSON structure for the input file.
 -   `--configure` or `-c`: when enabled, opens a text-based user interface to configure or change settings.
--   `--settings`: Display the current settings.
+-   `--settings` or `-s`: Display the current settings.
+-   `--set-settings`: Save the current settings as default.
 -   `--help` or `-h`
 
-### Example JSON Structure
-
-If you want to see an example of the expected JSON structure for the input file, you can use the `--example` option:
-
-```sh
-mangadm --example
-```
 
 ## Using MangaDM as a Library
 
@@ -170,11 +146,11 @@ from mangadm import MangaDM
 mangadm = MangaDM(
     json_file="path/to/yourfile.json",
     dest_path="path/to/chapter",
-    chapters_limit=1,
+    limit=1,
     delete_on_success=False,
     force_download=False,
-    save_as_CBZ=True,
-    transient=False
+    format="cbz", # ["cbz", "epub"]
+    transient=True
 )
 
 # Start the downloading process
@@ -185,49 +161,84 @@ mangadm.start()
 
 -   `json_file` (str): The path to the JSON file containing manga data.
 -   `dest_path` (str): The destination path where manga chapters will be downloaded. Defaults to the current directory.
--   `chapters_limit` (int): Number of chapters to download. If -1, download all chapters. Defaults to -1.
+-   `limit` (int): Number of chapters to download. If -1, download all chapters. Defaults to -1.
 -   `force_download` (bool): If `True`, re-download files even if they exist. Defaults to False.
 -   `delete_on_success` (bool): If `True`, delete chapter data from JSON after successful download. Defaults to False.
--   `save_as_CBZ` (bool): If `True`, the downloaded chapters will be saved in CBZ format, Defaults to False.
--   `transient` (bool): If `True`, activates transient mode. This mode ensures that progress indicators are not persisted after the process completes. Defaults to False.
+-   `format` (Literal["cbz", "epub"]): The format in which to save the downloaded manga. Can be either `"cbz"` for a comic book archive or `"epub"` for an e-book file. Defaults to `"cbz"`.
+-   `transient` (bool): If `True`, activates transient mode. This mode ensures that progress indicators are not persisted after the process completes. Defaults to True.
 
 ## Example JSON Structure
 
-Here’s an example of the JSON structure required for the input file:
+Below is an example of the JSON structure required for the input file:
 
 ```json
-[
+{
+  "details": {
+    "source": "Example Source Name",
+    "manganame": "Example Manga Name",
+    "cover": "https://example.com/cover.jpg",
+    "description": "Example Description",
+    "genre": [
+      "genre 1",
+      "genre 2",
+      "etc"
+    ],
+    "author": "Akutami Gege",
+    "artist": "Akutami Gege"
+  },
+  "chapters": [
     {
-        "manganame": "Jujutsu Kaisen",
-        "cover": "https://example.com/cover.jpg",
-        "title": "Jujutsu Kaisen - 256",
-        "images": [
-            "https://example.com/image1.jpg",
-            "https://example.com/image2.jpg",
-            "https://example.com/image3.jpg"
-        ]
+      "title": "chapter 256 - Example Title",
+      "images": [
+        "https://example.com/image1.jpg",
+        "https://example.com/image2.jpg",
+        "https://example.com/image3.jpg",
+        "https://example.com/image4.jpg",
+        "etc"
+      ]
     },
     {
-        "manganame": "Boruto",
-        "cover": "https://example.com/cover.jpg",
-        "title": "Boruto - 7",
-        "images": [
-            "https://example.com/image1.jpg",
-            "https://example.com/image2.jpg",
-            "https://example.com/image3.jpg"
-        ]
+      "title": "chapter 257 - Example Title",
+      "images": [
+        "https://example.com/image1.jpg",
+        "https://example.com/image2.jpg",
+        "https://example.com/image3.jpg",
+        "https://example.com/image4.jpg",
+        "etc"
+      ]
+    },
+    {
+      "title": "chapter 258 - Example Title",
+      "images": [
+        "https://example.com/image1.jpg",
+        "https://example.com/image2.jpg",
+        "https://example.com/image3.jpg",
+        "https://example.com/image4.jpg",
+        "etc"
+      ]
     }
-]
+  ]
+}
 ```
 
-The JSON structure provided earlier is a simplified example of how you should format your input file for the MangaDM tool. Each manga entry contains the following keys:
+The JSON structure provided above illustrates the format expected for input files used by the MangaDM tool. Each JSON file should follow these guidelines:
 
-- **`manganame`**: The name of the manga series.
-- **`cover`**: A URL to the cover image of the manga chapter. This is optional but can be used to enhance the metadata.
-- **`title`**: The title of the specific manga chapter.
-- **`images`**: An list of URLs, where each URL points to an image file (usually pages of the manga chapter).
+### Structure Breakdown
+- **`details`**: Contains metadata about the manga series.
+  - **`source`**: The source or website where the manga is found.
+  - **`manganame`**: The name of the manga series.
+  - **`cover`**: A URL pointing to the cover image of the manga. This is optional but can enhance the metadata.
+  - **`description`**: A short description of the manga.
+  - **`genre`**: A list of genres the manga belongs to.
+  - **`author`**: The name of the author of the manga.
+  - **`artist`**: The name of the artist responsible for the manga's artwork.
+- **`chapters`**: An array of objects, each representing a chapter in the manga.
+  - **`title`**: The title or number of the chapter.
+  - **`images`**: A list of URLs where each URL points to an image file, typically representing the pages of the manga chapter.
 
-You can add as many manga entries as needed, and the tool will process each entry sequentially based on the options provided.
+### Adding More Entries
+You can include multiple manga entries, and the MangaDM tool will handle each entry sequentially according to the options provided.
+
 
 ## Contributing
 

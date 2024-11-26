@@ -4,23 +4,23 @@ import os
 from mangadm import MangaDM
 from mangadm.utils import CliUtility
 from rich.console import Console
-from click_completion import init
+import click_completion
 
 # Initialize the click-completion
-init()
+click_completion.init()
 
 console = Console()
 
 DEFAULT_SETTINGS = {
     "dest": ".",
     "limit": -1,
+    "format": "cbz",  
 }
 
 DEFAULT_FLAGS = {
     "force": False,
     "delete": False,
-    "cbz": True,
-    "transient": False,
+    "transient": True,
 }
 
 def load_settings(user_settings, stored_settings):
@@ -32,7 +32,6 @@ def load_settings(user_settings, stored_settings):
     
 def load_flags_settings(user_flags, stored_settings):
     """Load and merge flags with user-provided flags."""
-
     return {
         key: user_flags[key] if user_flags[key] is not None else stored_settings.get(key, DEFAULT_FLAGS[key])
         for key in DEFAULT_FLAGS
@@ -41,10 +40,10 @@ def load_flags_settings(user_flags, stored_settings):
 def load_and_merge_settings(user_settings, user_flags):
     """Merge default, stored, and user settings."""
     stored_settings = CliUtility.load_stored_settings()
-    effective_settings = load_settings(user_settings, stored_settings)
-    effective_flags = load_flags_settings(user_flags, stored_settings)
-    
-    return {**effective_settings, **effective_flags}
+    return {
+        **load_settings(user_settings, stored_settings), 
+        **load_flags_settings(user_flags, stored_settings)
+    }
 
 def save_default_settings(effective_settings):
     """Save the current effective settings as the new defaults."""
@@ -63,7 +62,6 @@ def display_saved_settings(effective_settings):
 @click.argument(
     "json_file", required=False,
     type=click.Path(exists=True), 
-    
 )
 @click.option(
     "--dest", "-p", default=None,
@@ -82,8 +80,8 @@ def display_saved_settings(effective_settings):
     help="Delete chapter data from JSON after successful download.",
 )
 @click.option(
-    "--cbz/--no-cbz", "-z", is_flag=True, default=None,
-    help="Save the chapter as CBZ.",
+    "--format", "-m", type=click.Choice(['cbz', 'epub'], case_sensitive=False), default=None,
+    help="Choose the format to save the manga (CBZ or EPUB).",
 )
 @click.option(
     "--transient/--no-transient", "-t", is_flag=True, default=None,
@@ -94,19 +92,23 @@ def display_saved_settings(effective_settings):
     help="Display an example JSON structure for the input file.",
 )
 @click.option(
-    "--set-settings", "-s", is_flag=True,
-    help="Save the current settings as default.",
-)
-@click.option(
     "--configure", "-c", is_flag=True,
     help="Open the configuration text UI to set up or change settings.",
 )
 @click.option(
-    "--settings", is_flag=True,
+    "--settings", "-s", is_flag=True,
     help="Display the current settings.",
 )
+@click.option(
+    "--set-settings", is_flag=True,
+    help="Save the current settings as default.",
+)
+@click.option(
+    "--update-details", "-u", is_flag=True,
+    help="update details.json file and re-download cover.",
+)
 @click.help_option("--help", "-h")
-def cli(json_file, dest, limit, force, delete, cbz, transient, example, set_settings, configure, settings):
+def cli(json_file, dest, limit, force, delete, format, transient, update_details, example, configure, settings, set_settings):
     """A command-line tool for downloading manga chapters based on a JSON file."""
     
     # Open settings UI if requested
@@ -125,11 +127,11 @@ def cli(json_file, dest, limit, force, delete, cbz, transient, example, set_sett
     user_settings = {
         "dest": dest,
         "limit": limit,
+        "format": format,
     }
     user_flags = {
         "force": force,
         "delete": delete,
-        "cbz": cbz,
         "transient": transient,
     }
 
@@ -139,7 +141,7 @@ def cli(json_file, dest, limit, force, delete, cbz, transient, example, set_sett
     if settings:
         display_saved_settings(effective_settings)
         return
-
+    
     if set_settings:
         save_default_settings(effective_settings)
         return
@@ -153,11 +155,12 @@ def cli(json_file, dest, limit, force, delete, cbz, transient, example, set_sett
     manga_downloader = MangaDM(
         json_file=json_file,
         dest_path=effective_settings["dest"],
-        chapters_limit=effective_settings["limit"],
+        limit=effective_settings["limit"],
         force_download=effective_settings["force"],
         delete_on_success=effective_settings["delete"],
-        save_as_CBZ=effective_settings["cbz"],
-        transient=effective_settings["transient"]
+        format=effective_settings["format"],
+        transient=effective_settings["transient"],
+        update_details=update_details 
     )
 
     manga_downloader.start()

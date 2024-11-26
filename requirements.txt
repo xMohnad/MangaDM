@@ -2,4 +2,5 @@ requests
 click
 rich
 InquirerPy
+ebooklib
 click-completion
