@@ -13,7 +13,7 @@ class MangaDM:
 
     def __init__(
         self,
-        json_file: str,
+        json_file: Path,
         dest_path: str = ".",
         limit: int = -1,
         force_download: bool = False,
@@ -22,7 +22,7 @@ class MangaDM:
         format: Literal["cbz", "epub"] = "cbz",
         transient: bool = True,
     ) -> None:
-        if not json_file.lower().endswith(".json"):
+        if not str(json_file).lower().endswith(".json"):
             Logger.error(
                 f"Unsupported file format: {json_file}. Please use JSON format."
             )
