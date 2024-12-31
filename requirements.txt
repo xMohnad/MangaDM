@@ -3,4 +3,4 @@ click
 rich
 InquirerPy
 ebooklib
-click-completion
+auto_click_auto
