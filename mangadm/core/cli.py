@@ -1,169 +1,210 @@
 import click
-import json
-import os
-from mangadm import MangaDM
+from enum import Enum
+from pathlib import Path
+from auto_click_auto import enable_click_shell_completion_option
+
+from mangadm import MangaDM, __version__
 from mangadm.utils import CliUtility
-from rich.console import Console
-import click_completion
 
-# Initialize the click-completion
-click_completion.init()
 
-console = Console()
+class FormatType(str, Enum):
+    cbz = "cbz"
+    epub = "epub"
 
-DEFAULT_SETTINGS = {
-    "dest": ".",
-    "limit": -1,
-    "format": "cbz",  
-}
 
-DEFAULT_FLAGS = {
-    "force": False,
-    "delete": False,
-    "transient": True,
-}
+def display_settings(settings):
+    """Display settings in a readable format."""
+    from rich.console import Console
 
-def load_settings(user_settings, stored_settings):
-    # Separate settings in loaded settings
-    base_settings = {key: stored_settings.get(key, DEFAULT_SETTINGS[key]) for key in DEFAULT_SETTINGS}
-    
-    # Override defaults with user-provided settings if they are not None
-    return {key: user_settings.get(key) if user_settings.get(key) is not None else base_settings[key]for key in DEFAULT_SETTINGS}
-    
-def load_flags_settings(user_flags, stored_settings):
-    """Load and merge flags with user-provided flags."""
-    return {
-        key: user_flags[key] if user_flags[key] is not None else stored_settings.get(key, DEFAULT_FLAGS[key])
-        for key in DEFAULT_FLAGS
-    }
-
-def load_and_merge_settings(user_settings, user_flags):
-    """Merge default, stored, and user settings."""
-    stored_settings = CliUtility.load_stored_settings()
-    return {
-        **load_settings(user_settings, stored_settings), 
-        **load_flags_settings(user_flags, stored_settings)
-    }
-
-def save_default_settings(effective_settings):
-    """Save the current effective settings as the new defaults."""
-    CliUtility.save_stored_settings(effective_settings)
-    click.echo("Settings have been saved:")
-    display_saved_settings(effective_settings)
-
-def display_saved_settings(effective_settings):
-    """Display the saved settings in a user-friendly format."""
-    click.echo("=" * 40)
-    for key, value in effective_settings.items():
+    console = Console()
+    console.print("=" * 40)
+    for key, value in settings.items():
+        if key == "save_defaults":
+            continue
         console.print(f"{key.capitalize():<15}: {value}")
-    click.echo("=" * 40)
+    console.print("=" * 40)
 
-@click.command()
+
+def print_version(ctx, param, value):
+    if value:
+        click.echo(f"Version: {__version__}")
+        ctx.exit()
+
+
+@click.group(
+    help="MangaDM CLI: Download manga chapters and manage settings.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+@enable_click_shell_completion_option(program_name="mangadm")
+@click.option(
+    "--version",
+    "-v",
+    is_flag=True,
+    is_eager=True,
+    callback=print_version,
+    help="Show the application version.",
+)
+def cli(version):
+    pass
+
+
+default_settings = CliUtility.load_stored_settings()
+
+
+@cli.command()
 @click.argument(
-    "json_file", required=False,
-    type=click.Path(exists=True), 
+    "json_file",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True),
 )
 @click.option(
-    "--dest", "-p", default=None,
-    help="Destination path for downloading manga chapters.",
+    "--dest",
+    "-p",
+    default=default_settings.get("dest", "."),
+    help="Destination path for downloading manga.",
 )
 @click.option(
-    "--limit", "-l", default=None, type=int,
-    help="Number of chapters to download. If -1, download all chapters.",
+    "--limit",
+    "-l",
+    default=default_settings.get("limit", -1),
+    help="Number of chapters to download (-1 for all).",
 )
 @click.option(
-    "--force/--no-force", "-f", is_flag=True, default=None,
-    help="Re-download chapter if not complete.",
+    "--force/--no-force",
+    "-f",
+    default=default_settings.get("force", False),
+    help="Re-download incomplete image.",
 )
 @click.option(
-    "--delete/--no-delete", "-d", is_flag=True, default=None,
-    help="Delete chapter data from JSON after successful download.",
+    "--delete/--no-delete",
+    "-d",
+    default=default_settings.get("delete", False),
+    help="Delete data after successful download.",
 )
 @click.option(
-    "--format", "-m", type=click.Choice(['cbz', 'epub'], case_sensitive=False), default=None,
-    help="Choose the format to save the manga (CBZ or EPUB).",
+    "--format",
+    "-m",
+    type=click.Choice([ft.value for ft in FormatType], case_sensitive=False),
+    default=default_settings.get("format", "cbz"),
+    help="Format for downloaded manga.",
 )
 @click.option(
-    "--transient/--no-transient", "-t", is_flag=True, default=None,
-    help="Activate transient mode (progress bar will disappear after completion)."
+    "--transient/--no-transient",
+    "-t",
+    default=default_settings.get("transient", True),
+    help="Enable transient mode.",
 )
 @click.option(
-    "--example", "-e", is_flag=True,
-    help="Display an example JSON structure for the input file.",
+    "--update-details/--no-update-details",
+    "-u",
+    default=default_settings.get("update_details", False),
+    help="Update `details.json` and re-download cover.",
 )
-@click.option(
-    "--configure", "-c", is_flag=True,
-    help="Open the configuration text UI to set up or change settings.",
-)
-@click.option(
-    "--settings", "-s", is_flag=True,
-    help="Display the current settings.",
-)
-@click.option(
-    "--set-settings", is_flag=True,
-    help="Save the current settings as default.",
-)
-@click.option(
-    "--update-details", "-u", is_flag=True,
-    help="update details.json file and re-download cover.",
-)
-@click.help_option("--help", "-h")
-def cli(json_file, dest, limit, force, delete, format, transient, update_details, example, configure, settings, set_settings):
-    """A command-line tool for downloading manga chapters based on a JSON file."""
-    
-    # Open settings UI if requested
-    if configure:
-        user_settings = CliUtility.settings_ui()
-        if user_settings:
-            save_default_settings(user_settings)
-        return
-    
-    # Handle example option
-    if example:
-        CliUtility.display_example_json()
-        return
+def download(json_file, dest, limit, force, delete, format, transient, update_details):
+    """Download manga chapters based on a JSON file."""
 
-    # Gather user-provided settings and flags
-    user_settings = {
-        "dest": dest,
-        "limit": limit,
-        "format": format,
-    }
-    user_flags = {
-        "force": force,
-        "delete": delete,
-        "transient": transient,
-    }
-
-    # Merge settings and flags
-    effective_settings = load_and_merge_settings(user_settings, user_flags)
-
-    if settings:
-        display_saved_settings(effective_settings)
-        return
-    
-    if set_settings:
-        save_default_settings(effective_settings)
-        return
-
-    if not json_file:
-        click.echo("Error: Missing argument 'JSON_FILE'.")
-        click.echo("For help, try 'mangadm --help'.")
-        return
-
-    # Start the manga download process
-    manga_downloader = MangaDM(
-        json_file=json_file,
-        dest_path=effective_settings["dest"],
-        limit=effective_settings["limit"],
-        force_download=effective_settings["force"],
-        delete_on_success=effective_settings["delete"],
-        format=effective_settings["format"],
-        transient=effective_settings["transient"],
-        update_details=update_details 
+    # Start download process
+    downloader = MangaDM(
+        json_file=Path(json_file),
+        dest_path=dest,
+        limit=limit,
+        force_download=force,
+        delete_on_success=delete,
+        format=format,
+        transient=transient,
+        update_details=update_details,
     )
+    downloader.start()
 
-    manga_downloader.start()
+
+@cli.command()
+def configure():
+    """Open configuration UI."""
+    settings = [
+        {
+            "type": "input",
+            "name": "dest",
+            "message": "Destination path for downloading manga:",
+            "default": str(default_settings.get("dest", ".")),
+        },
+        {
+            "type": "input",
+            "name": "limit",
+            "message": "Number of chapters to download (-1 for all):",
+            "default": str(default_settings.get("limit", -1)),
+            "validate": lambda result: (result.isdigit() and int(result) > 0)
+            or result == "-1"
+            or False,
+            "invalid_message": "Please enter -1 or a positive integer greater than 0.",
+            "filter": lambda result: (
+                int(result) if result.isdigit() or result == "-1" else -1
+            ),
+        },
+        {
+            "type": "list",
+            "name": "format",
+            "message": "Select the format for saving manga files:",
+            "choices": [ft.value for ft in FormatType],
+            "default": default_settings.get("format", "cbz"),
+        },
+        {
+            "type": "confirm",
+            "name": "force",
+            "message": "Re-download incomplete image?",
+            "default": default_settings.get("force", False),
+        },
+        {
+            "type": "confirm",
+            "name": "delete",
+            "message": "Delete chapter data from JSON after successful download?",
+            "default": default_settings.get("delete", False),
+        },
+        {
+            "type": "confirm",
+            "name": "transient",
+            "message": "Activate transient mode (will disappear after completion)?",
+            "default": default_settings.get("transient", False),
+        },
+        {
+            "type": "confirm",
+            "name": "update_details",
+            "message": "Update `details.json` and re-download cover.",
+            "default": default_settings.get("update_details", False),
+        },
+        {
+            "type": "confirm",
+            "name": "save_defaults",
+            "message": "Would you like to save these settings as the new default?",
+            "default": True,
+        },
+    ]
+
+    # Prompt for settings and flags
+    from InquirerPy import prompt
+
+    user_settings = prompt(settings)
+
+    # Save defaults if requested
+    if user_settings.get("save_defaults"):
+        if user_settings:
+            CliUtility.save_stored_settings(user_settings)
+            display_settings(user_settings)
+            click.secho("Settings saved successfully.", fg="green")
+        return
+    else:
+        click.secho("Settings were not saved as default.", fg="red")
+
+
+@cli.command()
+def example():
+    """Display an example JSON structure."""
+    CliUtility.display_example_json()
+
+
+@cli.command()
+def view():
+    """View current settings."""
+    display_settings(default_settings)
+
 
 if __name__ == "__main__":
     cli()
