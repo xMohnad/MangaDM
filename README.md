@@ -2,136 +2,110 @@
 
 **MangaDM** is a command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file.
 
+## Table of Contents
+
+1. [Installation](#installation)\
+   1.1 [Install from Source](#install-from-source)\
+   1.2 [Install from Distribution Package](#install-from-distribution-package)
+1. [Usage CLI](#usage-cli)\
+   2.1 [Commands](#commands)
+   - [`download`](#download)
+   - [`configure`](#configure)
+   - [`example`](#example)
+   - [`view`](#view)\
+     2.2 [General Notes](#general-notes)
+1. [Using MangaDM as a Library](#using-mangadm-as-a-library)\
+   3.1 [Example Usage](#example-usage)\
+   3.2 [Parameters](#parameters)
+1. [Example JSON Structure](#example-json-structure)\
+   4.1 [Structure Breakdown](#structure-breakdown)\
+   4.2 [Adding More Entries](#adding-more-entries)
+1. [Contributing](#contributing)\
+   5.1 [Bug Reports & Feature Requests](#bug-reports-and-feature-requests)
+1. [License](#license)
+
+______________________________________________________________________
+
 ## Installation
 
-To install the MangaDM, you need to have Python installed on your system. You can then use `pip` to install from the source code or from a distribution package.
+Before installing MangaDM, ensure that Python is installed on your system. You can then install MangaDM via one of the following methods:
 
 ### Install from Source
 
+To install MangaDM from the source code:
+
 1. Clone the repository:
 
-    ```sh
-    git clone https://github.com/xMohnad/MangaDM.git
-    cd MangaDM
-    ```
+   ```sh
+   git clone https://github.com/xMohnad/MangaDM.git
+   cd MangaDM
+   ```
 
-2. Install the tool:
-    ```sh
-    pip install .
-    ```
+1. Install the tool:
+
+   ```sh
+   pip install .
+   ```
 
 ### Install from Distribution Package
 
-If you have a `.tar.gz` file, you can install it using `pip`:
+You can install MangaDM using the `pip` tool from a `.tar.gz` or `.whl` distribution package:
 
-```sh
-pip install dist/MangaDM*.tar.gz
-```
+- **For `.tar.gz` file**:
 
--   or `.whl`
+  ```sh
+  pip install dist/MangaDM*.tar.gz
+  ```
 
-```sh
-pip install dist/MangaDM*py3-none-any.whl
-```
+- **For `.whl` file**:
 
-## Usage
+  ```sh
+  pip install dist/MangaDM*py3-none-any.whl
+  ```
 
-Once installed, you can use the `mangadm` command to download manga chapters. Here are the available options
+This will install MangaDM from the specified package located in the `dist` directory.
 
-### Example Commands
+______________________________________________________________________
 
-```sh
-mangadm [OPTIONS] [JSON_FILE]
-```
+## Usage CLI
 
-#### Basic Usage
+Once installed, you can use the `mangadm` command to download manga chapters.
 
-```sh
-mangadm /path/to/manga.json
-```
+### Commands
 
-This command will download all chapters specified in the `manga.json` file to the current directory.
+#### `download`
 
-#### Specify Destination Path
+- **Purpose**: Downloads manga chapters based on a provided JSON file.
+- **Arguments**:
+  - `json_file`: Path to the JSON file containing manga download details.
+- **Options**:
+  - `--dest, -p`: Destination path for downloading manga (default is the current directory).
+  - `--limit, -l`: Number of chapters to download (default is `-1` for all chapters).
+  - `--force/--no-force, -f`: Force re-download of incomplete images.
+  - `--delete/--no-delete, -d`: Delete data after successful download.
+  - `--format, -m`: Format for downloaded manga (choices are based on `FormatType` enum).
+  - `--transient/--no-transient, -t`: Enable or disable transient mode.
+  - `--update-details/--no-update-details, -u`: Update `details.json` and re-download cover.
 
-```sh
-mangadm /path/to/manga.json --dest /path/to/save
-```
+#### `configure`
 
-This command will download all chapters to the specified destination path.
+- **Purpose**: Opens a configuration UI for setting up MangaDM options.
 
-#### Limit Number of Chapters
+#### `example`
 
-```sh
-mangadm /path/to/manga.json --limit 10
-```
+- **Purpose**: Displays an example JSON structure.
 
-This command will download only the first 10 chapters.
+#### `view`
 
-#### Force Re-download of Existing Files
+- **Purpose**: Views the current configuration settings.
 
-```sh
-mangadm /path/to/manga.json --force
-```
+### General Notes
 
-This command will re-download files even if they already exist.
+- **Versioning**: The version is displayed with the `--version` flag.
+- **Completion**: The CLI supports shell completion using `auto_click_auto`. The `--autocomplete` flag is available to enable shell completion for the default shell.
+- **More**: Use `--help` flag in any of the commands.
 
-#### Delete Data After Successful Download
-
-```sh
-mangadm /path/to/manga.json --delete
-```
-
-This command will delete the chapter data from the JSON file after a successful download.
-
-
-#### Enable Transient Mode
-
-```sh
-mangadm /path/to/manga.json --transient
-```
-
-This command will enable transient mode, where progress indicators are not persisted after the download process completes.
-
-#### Set and Save Default Settings
-
-To set and save your current settings as the default, use the `--set-settings` option:
-
-```sh
-mangadm /path/to/manga.json --dest /path/to/save --limit 10 --force --delete --set-settings
-```
-
--   or
-
-```sh
-mangadm /path/to/manga.json --dest /path/to/save --limit 10 --no-force --no-delete --set-settings
-```
-
-This command will save the current settings (destination path, chapter limit, force re-download, delete on success) as the default for future downloads.
-
-
-### Example JSON Structure
-
-If you want to see an example of the expected JSON structure for the input file, you can use the `--example` option:
-
-```sh
-mangadm --example
-``` 
-
-### Options
-
--   `--dest` or `-p`: Destination path for downloading manga chapters. Default is the current directory.
--   `--limit` or `-l`: Number of chapters to download. If `-1`, download all chapters. Default is `-1`.
--   `--force/--no-force` or `-f`: Re-download chapter if not complete.
--   `--delete/--no-delete` or `-d`: Delete chapter data from JSON after successful download.
--   `format` or `-m` [cbz|epub]: The format in which to save the downloaded manga. Can be either `"cbz"` for a comic book archive or `"epub"` for an e-book file. Defaults to `"cbz"`.
--   `--transient/--no-transient` or `-t`: Activate transient mode (progress bar will disappear after completion).
--   `--example` or `-e`: Display an example JSON structure for the input file.
--   `--configure` or `-c`: when enabled, opens a text-based user interface to configure or change settings.
--   `--settings` or `-s`: Display the current settings.
--   `--set-settings`: Save the current settings as default.
--   `--help` or `-h`
-
+______________________________________________________________________
 
 ## Using MangaDM as a Library
 
@@ -149,7 +123,7 @@ mangadm = MangaDM(
     limit=1,
     delete_on_success=False,
     force_download=False,
-    format="cbz", # ["cbz", "epub"]
+    format="cbz",  # ["cbz", "epub"]
     transient=True
 )
 
@@ -159,13 +133,15 @@ mangadm.start()
 
 ### Parameters
 
--   `json_file` (str): The path to the JSON file containing manga data.
--   `dest_path` (str): The destination path where manga chapters will be downloaded. Defaults to the current directory.
--   `limit` (int): Number of chapters to download. If -1, download all chapters. Defaults to -1.
--   `force_download` (bool): If `True`, re-download files even if they exist. Defaults to False.
--   `delete_on_success` (bool): If `True`, delete chapter data from JSON after successful download. Defaults to False.
--   `format` (Literal["cbz", "epub"]): The format in which to save the downloaded manga. Can be either `"cbz"` for a comic book archive or `"epub"` for an e-book file. Defaults to `"cbz"`.
--   `transient` (bool): If `True`, activates transient mode. This mode ensures that progress indicators are not persisted after the process completes. Defaults to True.
+- `json_file` (Path): The path to the JSON file containing manga data.
+- `dest_path` (str): The destination path where manga chapters will be downloaded. Defaults to the current directory.
+- `limit` (int): Number of chapters to download. If -1, download all chapters. Defaults to -1.
+- `force_download` (bool): If `True`, re-download files even if they exist. Defaults to False.
+- `delete_on_success` (bool): If `True`, delete chapter data from JSON after successful download. Defaults to False.
+- `format` (Literal["cbz", "epub"]): The format in which to save the downloaded manga. Can be either `"cbz"` or `"epub"`. Defaults to `"cbz"`.
+- `transient` (bool): If `True`, activates transient mode. Defaults to True.
+
+______________________________________________________________________
 
 ## Example JSON Structure
 
@@ -178,11 +154,7 @@ Below is an example of the JSON structure required for the input file:
     "manganame": "Example Manga Name",
     "cover": "https://example.com/cover.jpg",
     "description": "Example Description",
-    "genre": [
-      "genre 1",
-      "genre 2",
-      "etc"
-    ],
+    "genre": ["genre 1", "genre 2", "etc"],
     "author": "Akutami Gege",
     "artist": "Akutami Gege"
   },
@@ -224,6 +196,7 @@ Below is an example of the JSON structure required for the input file:
 The JSON structure provided above illustrates the format expected for input files used by the MangaDM tool. Each JSON file should follow these guidelines:
 
 ### Structure Breakdown
+
 - **`details`**: Contains metadata about the manga series.
   - **`source`**: The source or website where the manga is found.
   - **`manganame`**: The name of the manga series.
@@ -237,16 +210,19 @@ The JSON structure provided above illustrates the format expected for input file
   - **`images`**: A list of URLs where each URL points to an image file, typically representing the pages of the manga chapter.
 
 ### Adding More Entries
+
 You can include multiple manga entries, and the MangaDM tool will handle each entry sequentially according to the options provided.
 
+______________________________________________________________________
 
 ## Contributing
 
-### Bug Reports & Feature Requests
+### Bug Reports and Feature Requests
 
 If you encounter any issues while using MangaDM or have suggestions for new features, you can open an issue on the GitHub repository. Please provide detailed information about the issue or feature request to help in resolving it more effectively.
+
+______________________________________________________________________
 
 ## License
 
 MangaDM is open-source software licensed under the [MIT License](https://opensource.org/licenses/MIT). This means you can freely use, modify, and distribute the tool, provided you include the original license and copyright notice in any distributions or derivative works.
-
