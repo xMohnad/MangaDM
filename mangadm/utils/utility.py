@@ -207,16 +207,25 @@ class CliUtility:
 
     @staticmethod
     def get_config_path() -> str:
-        """Get the configuration file path, supporting both Linux and Windows."""
-        config_dir = os.path.join(
-            os.getenv("APPDATA") or os.path.expanduser("~/.config"), "manga_dm"
-        )
-
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
-
-        return os.path.join(config_dir, "config.json")
-
+        """
+        Get the path to the configuration file.
+        
+        - On Linux: ~/.config/manga_dm/config.json
+        - On Windows: %APPDATA%/manga_dm/config.json
+        
+        Creates the directory if it does not exist.
+        
+        Returns:
+            str: Absolute path to the configuration file.
+        """
+        config_dir = Path(
+            (Path.home() / ".config" if not os.getenv("APPDATA") else Path(os.getenv("APPDATA")))
+        ) / "manga_dm"
+        
+        config_dir.mkdir(parents=True, exist_ok=True)
+    
+        return str(config_dir / "config.json")
+        
     @staticmethod
     def load_stored_settings() -> Dict[str, Any]:
         """Load stored settings from the configuration file."""
@@ -282,69 +291,3 @@ class CliUtility:
         }
 
         console.print_json(json.dumps(example_json))
-
-    @staticmethod
-    def settings_ui():
-        """Display a text UI for configuring settings."""
-        default_settings = CliUtility.load_stored_settings()
-
-        settings = [
-            {
-                "type": "input",
-                "name": "dest",
-                "message": "Destination path for downloading manga chapters:",
-                "default": str(default_settings.get("dest", ".")),
-            },
-            {
-                "type": "input",
-                "name": "limit",
-                "message": "Number of chapters to download (enter -1 to download all chapters):",
-                "default": str(default_settings.get("limit", -1)),
-                "validate": lambda result: (result.isdigit() and int(result) > 0) or result == "-1" or False,
-                "invalid_message": "Please enter -1 or a positive integer greater than 0.",
-                "filter": lambda result: int(result) if result.isdigit() or result == "-1" else -1,
-            },
-            {
-                "type": "list",
-                "name": "format",
-                "message": "Select the format for saving manga files:",
-                "choices": ["cbz", "epub"],
-                "default": default_settings.get("format", "cbz"),
-            },
-            {
-                "type": "confirm",
-                "name": "force",
-                "message": "Re-download files even if not complete?",
-                "default": default_settings.get("force", False),
-            },
-            {
-                "type": "confirm",
-                "name": "delete",
-                "message": "Delete chapter data from JSON after successful download?",
-                "default": default_settings.get("delete", False),
-            },
-            {
-                "type": "confirm",
-                "name": "transient",
-                "message": "Activate transient mode (will disappear after completion)?",
-                "default": default_settings.get("transient", False),
-            },
-            {
-                "type": "confirm",
-                "name": "save_defaults",
-                "message": "Would you like to save these settings as the new default?",
-                "default": True,
-            },
-        ]
-
-        # Prompt for settings and flags
-        from InquirerPy import prompt
-
-        settings = prompt(settings)
-
-        # Save defaults if requested
-        if settings.get("save_defaults"):
-            settings.pop("save_defaults")
-            return settings
-        else:
-            console.print("Settings were not saved as default.")
