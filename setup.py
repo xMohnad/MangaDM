@@ -1,5 +1,7 @@
 from setuptools import setup, find_packages
 
+from mangadm import __version__
+
 
 def parse_requirements(filename):
     with open(filename, "r", encoding="utf8") as f:
@@ -12,7 +14,7 @@ def parse_requirements(filename):
 
 setup(
     name="MangaDM",
-    version="0.5.5",
+    version=__version__,
     packages=find_packages(),
     install_requires=parse_requirements("requirements.txt"),
     classifiers=[
