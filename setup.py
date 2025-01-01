@@ -15,6 +15,7 @@ def parse_requirements(filename):
 setup(
     name="MangaDM",
     version=__version__,
+    description="A command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file.",
     packages=find_packages(),
     install_requires=parse_requirements("requirements.txt"),
     classifiers=[

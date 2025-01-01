@@ -32,7 +32,7 @@ def print_version(ctx, param, value):
 
 
 @click.group(
-    help="MangaDM CLI: Download manga chapters and manage settings.",
+    help="A CLI tool for Download manga chapters based on the metadata specified in a JSON file.",
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 @enable_click_shell_completion_option(program_name="mangadm")
