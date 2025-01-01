@@ -17,6 +17,7 @@ setup(
     version=__version__,
     description="A command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file.",
     packages=find_packages(),
+    include_package_data=True,
     install_requires=parse_requirements("requirements.txt"),
     classifiers=[
         "Programming Language :: Python :: 3",
