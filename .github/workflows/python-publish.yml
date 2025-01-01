@@ -1,14 +1,24 @@
 name: Deploy and Release
 
-on: [push]
-
-permissions:
-  contents: write
-  id-token: write
+on:
+  push:
+    tags:
+      - "v*"
+      # - "[0-9]+.[0-9]+.[0-9]+"
+      # - "[0-9]+.[0-9]+.[0-9]+a[0-9]+"
+      # - "[0-9]+.[0-9]+.[0-9]+b[0-9]+"
+      # - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
 
 jobs:
   deploy-and-release:
     runs-on: ubuntu-latest
+
+    environment:
+      name: release
+
+    permissions:
+      contents: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -25,13 +35,6 @@ jobs:
           pip install build twine
           pip install -r requirements.txt
 
-      - name: Extract version
-        id: extract_version
-        run: |
-          VERSION=$(python -c "import mangadm; print(mangadm.__version__)")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-        shell: bash
-
       - name: Build the package
         run: python -m build --no-isolation
 
@@ -42,8 +45,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: dist/*.tar.gz,dist/*.whl
-          tag: v${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
 
@@ -51,7 +54,5 @@ jobs:
         run: twine check dist/*
 
       - name: Publish package
-        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        if: github.repository == 'xMohnad/MangaDM'
+        uses: pypa/gh-action-pypi-publish@release/v1
