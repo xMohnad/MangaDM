@@ -4,66 +4,122 @@
 
 ## Table of Contents
 
-1. [Installation](#installation)\
-   1.1 [Install from Source](#install-from-source)\
-   1.2 [Install from Distribution Package](#install-from-distribution-package)
-1. [Usage CLI](#usage-cli)\
-   2.1 [Commands](#commands)
-   - [`download`](#download)
-   - [`configure`](#configure)
-   - [`example`](#example)
-   - [`view`](#view)\
-     2.2 [General Notes](#general-notes)
-1. [Using MangaDM as a Library](#using-mangadm-as-a-library)\
-   3.1 [Example Usage](#example-usage)\
-   3.2 [Parameters](#parameters)
-1. [Example JSON Structure](#example-json-structure)\
-   4.1 [Structure Breakdown](#structure-breakdown)\
-   4.2 [Adding More Entries](#adding-more-entries)
-1. [Contributing](#contributing)\
-   5.1 [Bug Reports & Feature Requests](#bug-reports-and-feature-requests)
-1. [License](#license)
+- [Installation](#installation)
+  - [Install from PyPI](<#install-from-pypi-(recommended)>)
+  - [Install from Source](#install-from-source)
+  - [Install from Distribution Package](#install-from-distribution-package)
+    - [Prepare Your Environment](#prepare-your-environment)
+    - [Build and Install the Package](#build-and-install-the-package)
+- [Usage CLI](#usage-cli)
+  - [Commands](#commands)
+    - [`download`](#download)
+    - [`configure`](#configure)
+    - [`example`](#example)
+    - [`view`](#view)
+  - [General Notes](#general-notes)
+- [Using MangaDM as a Library](#using-mangadm-as-a-library)
+  - [Example Usage](#example-usage)
+  - [Parameters](#parameters)
+- [Example JSON Structure](#example-json-structure)
+  - [Structure Breakdown](#structure-breakdown)
+  - [Adding More Entries](#adding-more-entries)
+- [Contributing](#contributing)
+  - [Bug Reports & Feature Requests](#bug-reports-and-feature-requests)
+- [License](#license)
 
 ______________________________________________________________________
 
 ## Installation
 
-Before installing MangaDM, ensure that Python is installed on your system. You can then install MangaDM via one of the following methods:
+Ensure you have Python installed before proceeding.
+
+______________________________________________________________________
+
+### Install from PyPI (Recommended)
+
+```sh
+pip install MangaDM
+```
+
+______________________________________________________________________
 
 ### Install from Source
 
-To install MangaDM from the source code:
+To install MangaDM directly from the source code:
 
-1. Clone the repository:
+1. **Clone the Repository**
 
    ```sh
    git clone https://github.com/xMohnad/MangaDM.git
    cd MangaDM
    ```
 
-1. Install the tool:
+1. **Install MangaDM**
 
    ```sh
    pip install .
    ```
 
+______________________________________________________________________
+
 ### Install from Distribution Package
 
-You can install MangaDM using the `pip` tool from a `.tar.gz` or `.whl` distribution package:
+To install **MangaDM** from a pre-built distribution package, follow these detailed steps:
 
-- **For `.tar.gz` file**:
+______________________________________________________________________
 
-  ```sh
-  pip install dist/MangaDM*.tar.gz
-  ```
+#### Prepare Your Environment
 
-- **For `.whl` file**:
+1. **Install the `build` Library**\
+   The `build` library is required to create distribution packages. Install it using:
 
-  ```sh
-  pip install dist/MangaDM*py3-none-any.whl
-  ```
+   ```sh
+   pip install build
+   ```
 
-This will install MangaDM from the specified package located in the `dist` directory.
+1. **Clone the Repository**\
+   Open your terminal and clone the MangaDM repository:
+
+   ```sh
+   git clone https://github.com/xMohnad/MangaDM.git
+   cd MangaDM
+   ```
+
+______________________________________________________________________
+
+#### Build and Install the Package
+
+1. **Build the Package:**
+
+   Run the following command to create the distribution package in the `dist` directory:
+
+   ```sh
+   python -m build
+   ```
+
+   > [!NOTE]
+   > *It is advisable to update `setuptools` and `wheel` to ensure compatibility and avoid potential installation issues.*
+
+This will generate two types of files:
+
+- `.tar.gz` file (source distribution)
+- `.whl` file (wheel distribution)
+
+2. **Install the Package:**
+
+   After building, use `pip` to install the package depending on the file type:
+
+   - **For `.tar.gz` files**:
+
+     ```sh
+     pip install dist/MangaDM*.tar.gz
+     ```
+
+   - **For `.whl` files**:
+
+     ```sh
+     pip install dist/MangaDM*py3-none-any.whl
+     ```
 
 ______________________________________________________________________
 
