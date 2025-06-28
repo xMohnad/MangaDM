@@ -1,9 +1,10 @@
-import click
 from enum import Enum
 from pathlib import Path
+
+import click
 from auto_click_auto import enable_click_shell_completion_option
 
-from mangadm import MangaDM, __version__
+from mangadm import MangaDM
 from mangadm.utils import CliUtility
 
 
@@ -27,7 +28,9 @@ def display_settings(settings):
 
 def print_version(ctx, param, value):
     if value:
-        click.echo(f"Version: {__version__}")
+        from importlib.metadata import version
+
+        click.echo(f"Version: {version('mangadm')}")
         ctx.exit()
 
 
