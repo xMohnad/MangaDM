@@ -1,16 +1,103 @@
-from enum import Enum
+import json
+import os
 from pathlib import Path
+from typing import Any, Dict
 
 import click
 from auto_click_auto import enable_click_shell_completion_option
 
 from mangadm import MangaDM
-from mangadm.utils import CliUtility
+from mangadm.components.types import FormatType
 
 
-class FormatType(str, Enum):
-    cbz = "cbz"
-    epub = "epub"
+class CliUtility:
+    @staticmethod
+    def get_config_path() -> str:
+        """
+        Get the path to the configuration file.
+
+        - On Linux: ~/.config/manga_dm/config.json
+        - On Windows: %APPDATA%/manga_dm/config.json
+
+        Creates the directory if it does not exist.
+
+        Returns:
+            str: Absolute path to the configuration file.
+        """
+        appdata = os.getenv("APPDATA")
+        config_dir = Path(appdata) if appdata else Path.home() / ".config"
+        config_dir = config_dir / "manga_dm"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return str(config_dir / "config.json")
+
+    @staticmethod
+    def load_stored_settings() -> Dict[str, Any]:
+        """Load stored settings from the configuration file."""
+        config_path = CliUtility.get_config_path()
+
+        if not os.path.exists(config_path):
+            return {}
+
+        try:
+            with open(config_path, "r", encoding="utf-8") as config_file:
+                return json.load(config_file)
+        except (IOError, json.JSONDecodeError) as e:
+            click.echo(f"Failed to load config from {config_path}: {e}")
+            return {}
+
+    @staticmethod
+    def save_stored_settings(settings: Dict[str, Any]) -> None:
+        """Save settings to the configuration file."""
+        config_path = CliUtility.get_config_path()
+
+        try:
+            with open(config_path, "w", encoding="utf-8") as config_file:
+                json.dump(settings, config_file, ensure_ascii=False, indent=4)
+        except (IOError, OSError) as e:
+            click.echo(f"Failed to save config to {config_path}: {e}")
+
+    @staticmethod
+    def display_example_json():
+        """Display an example JSON structure."""
+        # Define common values
+        image_urls = [
+            "https://example.com/image1.jpg",
+            "https://example.com/image2.jpg",
+            "https://example.com/image3.jpg",
+            "https://example.com/image4.jpg",
+            "etc",
+        ]
+
+        example_json = {
+            "details": {
+                "source": "Example Source Name",
+                "manganame": "Example Manga Name",
+                "cover": "https://example.com/cover.jpg",
+                "description": "Example Description",
+                "genre": ["genre 1", "genre 2", "etc"],
+                "author": "Akutami Gege",
+                "artist": "Akutami Gege",
+            },
+            "chapters": [
+                {
+                    "title": "chapter 256 - Example Title",
+                    "images": image_urls,
+                },
+                {
+                    "title": "chapter 257 - Example Title",
+                    "images": image_urls,
+                },
+                {
+                    "title": "chapter 258 - Example Title",
+                    "images": image_urls,
+                },
+            ],
+        }
+
+        from rich.console import Console
+
+        console = Console()
+        console.print_json(json.dumps(example_json))
 
 
 def display_settings(settings):
@@ -72,12 +159,6 @@ default_settings = CliUtility.load_stored_settings()
     help="Number of chapters to download (-1 for all).",
 )
 @click.option(
-    "--force/--no-force",
-    "-f",
-    default=default_settings.get("force", False),
-    help="Re-download incomplete image.",
-)
-@click.option(
     "--delete/--no-delete",
     "-d",
     default=default_settings.get("delete", False),
@@ -85,16 +166,10 @@ default_settings = CliUtility.load_stored_settings()
 )
 @click.option(
     "--format",
-    "-m",
+    "-f",
     type=click.Choice([ft.value for ft in FormatType], case_sensitive=False),
     default=default_settings.get("format", "cbz"),
     help="Format for downloaded manga.",
-)
-@click.option(
-    "--transient/--no-transient",
-    "-t",
-    default=default_settings.get("transient", True),
-    help="Enable transient mode.",
 )
 @click.option(
     "--update-details/--no-update-details",
@@ -102,7 +177,7 @@ default_settings = CliUtility.load_stored_settings()
     default=default_settings.get("update_details", False),
     help="Update `details.json` and re-download cover.",
 )
-def download(json_file, dest, limit, force, delete, format, transient, update_details):
+def download(json_file, dest, limit, delete, format, update_details):
     """Download manga chapters based on a JSON file."""
 
     # Start download process
@@ -110,10 +185,8 @@ def download(json_file, dest, limit, force, delete, format, transient, update_de
         json_file=Path(json_file),
         dest_path=dest,
         limit=limit,
-        force_download=force,
         delete_on_success=delete,
-        format=format,
-        transient=transient,
+        format=FormatType(format),
         update_details=update_details,
     )
     downloader.start()
@@ -151,21 +224,9 @@ def configure():
         },
         {
             "type": "confirm",
-            "name": "force",
-            "message": "Re-download incomplete image?",
-            "default": default_settings.get("force", False),
-        },
-        {
-            "type": "confirm",
             "name": "delete",
             "message": "Delete chapter data from JSON after successful download?",
             "default": default_settings.get("delete", False),
-        },
-        {
-            "type": "confirm",
-            "name": "transient",
-            "message": "Activate transient mode (will disappear after completion)?",
-            "default": default_settings.get("transient", False),
         },
         {
             "type": "confirm",
@@ -182,14 +243,14 @@ def configure():
     ]
 
     # Prompt for settings and flags
-    from InquirerPy import prompt
+    from InquirerPy.resolver import prompt
 
     user_settings = prompt(settings)
 
     # Save defaults if requested
     if user_settings.get("save_defaults"):
         if user_settings:
-            CliUtility.save_stored_settings(user_settings)
+            CliUtility.save_stored_settings(user_settings)  # pyright: ignore
             display_settings(user_settings)
             click.secho("Settings saved successfully.", fg="green")
         return
