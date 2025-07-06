@@ -1,2 +1,2 @@
 from .mangadm import MangaDM
-from .downloader import Downloader
+from .slide_loader import SlideLoader
