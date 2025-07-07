@@ -8,7 +8,7 @@ from InquirerPy.resolver import prompt
 from trogon import tui
 
 from mangadm import MangaDM
-from mangadm.cli import CliUtility
+from mangadm.cli import CliUtility, PartialMatchGroup
 from mangadm.components.types import FormatType
 
 cli_util = CliUtility()
@@ -18,6 +18,7 @@ cli_util = CliUtility()
 @click.group(
     help="A CLI tool for downloading manga chapters based on a JSON metadata file.",
     context_settings={"help_option_names": ["-h", "--help"]},
+    cls=PartialMatchGroup,
 )
 @enable_click_shell_completion_option(program_name="mangadm")
 @click.version_option(version("mangadm"), "--version", "-V")

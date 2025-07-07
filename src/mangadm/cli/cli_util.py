@@ -1,11 +1,34 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
+import click
 from InquirerPy.resolver import prompt
 from rich.console import Console
 from rich.table import Table
+
+
+class PartialMatchGroup(click.Group):
+    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
+        """Finds and returns a command by name, supporting partial matches."""
+        full_name = self._resolve_command_name(cmd_name)
+        return super().get_command(ctx, full_name)
+
+    def _resolve_command_name(self, partial_name: str) -> str:
+        """Resolves a partial command name to the full command name."""
+        matches = [name for name in self.commands if name.startswith(partial_name)]
+
+        if not matches:
+            return partial_name  # No match found, return as-is
+
+        if len(matches) == 1:
+            return matches[0]  # Single match found
+
+        # Multiple matches found
+        raise click.BadParameter(
+            f"Ambiguous command '{partial_name}'. Possible matches: {', '.join(sorted(matches))}"
+        )
 
 
 class CliUtility:
