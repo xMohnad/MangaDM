@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
+from InquirerPy.resolver import prompt
 from rich.console import Console
 from rich.table import Table
 
@@ -71,6 +72,27 @@ class CliUtility:
             ],
         }
         self.console.print_json(json.dumps(example_json))
+
+    def reset(self) -> None:
+        confirmation = prompt(
+            [
+                {
+                    "type": "confirm",
+                    "name": "confirm_reset",
+                    "message": "Are you sure you want to reset all settings?",
+                    "default": False,
+                }
+            ]
+        )
+        if not confirmation.get("confirm_reset", False):
+            self.console.print("[yellow]Reset cancelled.")
+            return
+
+        try:
+            self.config_path.unlink()
+            self.console.print("[green]Settings have been reset.")
+        except FileNotFoundError:
+            self.console.print("[yellow]No settings to reset.")
 
     def display_settings(self, settings: Dict[str, Any]) -> None:
         table = Table(title="Current MangaDM Settings")

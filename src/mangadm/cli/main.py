@@ -132,6 +132,12 @@ def example():
 
 
 @cli.command()
+def reset():
+    """Reset saved settings."""
+    cli_util.reset()
+
+
+@cli.command()
 def view():
     """View current settings."""
     cli_util.display_settings(cli_util.settings)
