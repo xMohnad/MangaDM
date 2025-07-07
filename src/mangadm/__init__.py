@@ -1,1 +1,1 @@
-from .core.mangadm import MangaDM
+from .core.mangadm import FormatType, MangaDM
