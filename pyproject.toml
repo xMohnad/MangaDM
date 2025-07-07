@@ -38,6 +38,9 @@ Source = "https://github.com/xMohnad/MangaDM"
 Issues = "https://github.com/xMohnad/MangaDM/issues"
 Discussions = "https://github.com/xMohnad/MangaDM/discussions"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.uv]
 package = true
 

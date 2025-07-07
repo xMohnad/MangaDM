@@ -1,5 +1,3 @@
-graft mangadm
-include requirements.txt
-include setup.py
+graft src/mangadm
 global-exclude *.py[cod]
 global-exclude __pycache__/
