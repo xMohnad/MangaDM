@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -51,7 +52,9 @@ class SlideLoader(Status):
         self.spinner = self._spinner_progress
         self.temp_ext = "_tmp"
 
-        self.spinner_task = self.spinner.add_task(
+    @cached_property
+    def spinner_task(self):
+        return self.spinner.add_task(
             "",
             total=len(self.urls),
             chapter=0,
