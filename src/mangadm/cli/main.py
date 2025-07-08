@@ -5,6 +5,7 @@ from typing import Any, Dict, cast
 import click
 from auto_click_auto import enable_click_shell_completion_option
 from InquirerPy.resolver import prompt
+from prompt_toolkit.completion import PathCompleter
 from trogon import tui
 
 from mangadm import MangaDM
@@ -75,11 +76,19 @@ def download(json_file, dest, limit, delete, format, update_details):
 def configure():
     """Open configuration UI."""
     current = cli_util.settings
+    style = {
+        "completion-menu.completion": "bg:#444444 #ffffff",
+        "completion-menu.completion.current": "bg:#00afff #ffffff",
+        "scrollbar.background": "bg:#333333",
+        "scrollbar.button": "bg:#888888",
+    }
     questions = [
         {
             "type": "input",
             "name": "dest",
             "message": "Download destination:",
+            "completer": PathCompleter(only_directories=True, expanduser=True),
+            "validate": lambda val: len(val.strip()) > 0,
             "default": str(current.get("dest", ".")),
         },
         {
@@ -117,7 +126,7 @@ def configure():
             "default": True,
         },
     ]
-    answers = prompt(questions)
+    answers = prompt(questions, style=style, style_override=False)
     if answers.get("save_defaults"):
         assert isinstance(answers, dict), "Expected answers to be a dict"
         settings_dict = cast(Dict[str, Any], answers)
