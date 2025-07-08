@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Union
 
 import aiohttp
 from aiohttp.client import ClientSession
+from rich.console import Console
 from rich.progress import (
     BarColumn,
     DownloadColumn,
@@ -15,10 +16,11 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 
+from mangadm.components.base_component import BaseComponent
 from mangadm.components.types import DownloadResult, DownloadStatus, Status
 
 
-class SlideLoader(Status):
+class SlideLoader(BaseComponent, Status):
     """Asynchronous image downloader with progress tracking."""
 
     def __init__(
@@ -28,6 +30,7 @@ class SlideLoader(Status):
         max_concurrent: int = 4,
         chunk_size: int = 1024,
         timeout: int = 30,
+        console: Optional[Console] = None,
     ):
         """
         Initialize the SlideLoader.
@@ -39,12 +42,13 @@ class SlideLoader(Status):
             chunk_size: Size of chunks for downloading files
             timeout: Timeout for HTTP requests in seconds
         """
+        super().__init__(console)
+
         self._urls = urls or []
         self.max_concurrent = max_concurrent
         self.chunk_size = chunk_size
         self.timeout = timeout
         self.save_dir = save_dir
-
         self._current_tasks: Dict[asyncio.Task, str] = {}  # Task -> URL mapping
         self._results: List[DownloadResult] = []
 
@@ -194,14 +198,14 @@ class SlideLoader(Status):
 
             if id is not None:
                 self.progress.remove_task(id)
-            self.progress.log(result)
+            self.console.log(result)
             return result
 
         except Exception as e:
             result = DownloadResult(DownloadStatus.FAILED, temp_filepath, e, url=url)
             if id is not None:
                 self.progress.remove_task(id)
-                self.progress.log(result)
+                self.console.log(result)
             return result
 
     async def download_all(self) -> None:

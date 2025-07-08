@@ -1,16 +1,17 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
-from rich.console import Group
+from rich.console import Console, Group
 from rich.live import Live
 
-from mangadm.components.archiver import MangaArchiver
+from mangadm.components import MangaArchiver
+from mangadm.components.base_component import BaseComponent
 from mangadm.components.types import DownloadResult, DownloadStatus, FormatType, Status
 from mangadm.core.slide_loader import SlideLoader
 
 
-class MangaDM(Status):
+class MangaDM(BaseComponent, Status):
     """Manages the downloading of manga chapters from a JSON file."""
 
     # fmt: off
@@ -30,15 +31,17 @@ class MangaDM(Status):
         delete_on_success: bool = False,
         update_details: bool = False,
         format: FormatType = FormatType.cbz,
+        console: Optional[Console] = None,
     ) -> None:
+        super().__init__(console)
         self.json_file = json_file
         self.dest_path = dest_path
         self.limit = limit
         self.delete_on_success = delete_on_success
         self.update_details = update_details
         self.format = format
-        self._results: List[DownloadResult] = []
 
+        self._results: List[DownloadResult] = []
         self.details = self.data.get("details", {})
         manga_name = self.details.get("manganame", "UnknownManga").translate(
             self.translation_table
@@ -47,8 +50,8 @@ class MangaDM(Status):
         self.base_folder = self.dest_path / f"{manga_name} ({source})"
         self.base_folder.mkdir(parents=True, exist_ok=True)
 
-        self.loader = SlideLoader(save_dir=self.base_folder)
-        self.archiver = MangaArchiver(self.loader.progress)
+        self.loader = SlideLoader(console=self.console, save_dir=self.base_folder)
+        self.archiver = MangaArchiver(self.console)
 
     @property
     def json_file(self):
@@ -132,7 +135,7 @@ class MangaDM(Status):
     def _rename(self, temp_path: Path, folder_path: Path):
         try:
             if folder_path.exists():
-                self.loader.progress.log(
+                self.console.log(
                     f"'{str(temp_path)}' and '{str(folder_path)}' are considered the same on this file system (case-insensitive)."
                 )
                 return False
@@ -203,7 +206,7 @@ class MangaDM(Status):
 
             images = entry.get("images", [])
             if not images:
-                self.loader.progress.log(
+                self.console.log(
                     f"Chapter [green]{title}[/] has no downloadable images."
                 )
                 continue
@@ -241,5 +244,8 @@ class MangaDM(Status):
         self.loader.spinner.remove_task(self.loader.spinner_task)
 
     def start(self) -> None:
-        with Live(Group(self.loader.spinner, self.loader.progress)):
+        """Start download process"""
+        with Live(
+            Group(self.loader.spinner, self.loader.progress), console=self.console
+        ):
             self._start()

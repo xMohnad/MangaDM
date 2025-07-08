@@ -5,16 +5,17 @@ from pathlib import Path
 from typing import List
 
 from ebooklib import epub
-from rich.progress import Progress
+from rich.console import Console
 
 from mangadm.assets import build_chapter_content, epub_style_css
-from mangadm.components import FormatType
+from mangadm.components.base_component import BaseComponent
+from mangadm.components.types import FormatType
 
 
-class MangaArchiver:
-    def __init__(self, progress: Progress) -> None:
+class MangaArchiver(BaseComponent):
+    def __init__(self, console: Console) -> None:
         self.SUPPORTED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
-        self.progress = progress
+        self.console = console
 
     def _get_image_paths(self, folder_path: Path):
         """Return sorted list of image paths from the given folder."""
@@ -51,7 +52,7 @@ class MangaArchiver:
 
             shutil.rmtree(str(folder))
         except (IOError, OSError) as e:
-            self.progress.log(f"Error creating `{cbz_file.name}`: {e}")
+            self.console.log(f"Error creating `{cbz_file.name}`: {e}")
 
     def create_epub(self, folder_path: Path) -> None:
         """Create an EPUB file from a folder of images."""
