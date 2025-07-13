@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
 import click
@@ -53,6 +52,8 @@ def cli():
 )
 def download(json_file, dest, limit, delete, format, update_details):
     """Download manga chapters based on a JSON file."""
+    from pathlib import Path
+
     from mangadm import FormatType, MangaDM
 
     MangaDM(
