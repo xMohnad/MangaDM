@@ -29,6 +29,8 @@ class PartialMatchGroup(click.Group):
 
 
 class CliUtility:
+    SHELL_CHOICES = ["bash", "fish", "zsh", "powershell"]
+
     @cached_property
     def console(self):
         from rich.console import Console
@@ -52,6 +54,22 @@ class CliUtility:
             return version("mangadm")
         except (PackageNotFoundError, Exception):
             return "N/A"
+
+    @property
+    def shells(self):
+        return sorted(self.SHELL_CHOICES)
+
+    def validate_shell(self, shell: Optional[str]) -> str:
+        """Validate and return the shell name, or auto-detect if None."""
+        from click_completion import get_auto_shell
+
+        selected_shell = shell or get_auto_shell()
+        if selected_shell not in self.shells:
+            raise click.BadParameter(
+                f"Unsupported shell: {selected_shell}. "
+                f"Available options: {', '.join(self.shells)}"
+            )
+        return selected_shell
 
     def _resolve_config_path(self) -> Path:
         """

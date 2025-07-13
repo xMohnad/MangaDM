@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Any, Dict, cast
+from typing import Any, Dict, Optional, cast
 
 import click
-from auto_click_auto import enable_click_shell_completion_option
 
 from mangadm.cli import CliUtility, PartialMatchGroup
 from mangadm.components.types import FormatType
@@ -15,7 +14,6 @@ cli_util = CliUtility()
     context_settings={"help_option_names": ["-h", "--help"]},
     cls=PartialMatchGroup,
 )
-@enable_click_shell_completion_option(program_name="mangadm")
 @click.version_option(cli_util.version, "--version", "-V")
 def cli():
     pass
@@ -160,6 +158,53 @@ def run_tui():
     from trogon import tui
 
     tui()(cli)()
+
+
+@cli.group(cls=PartialMatchGroup)
+def completion() -> None:
+    """Manage shell completion scripts for this CLI tool."""
+    pass
+
+
+@completion.command(name="install")
+@click.argument(
+    "shell",
+    required=False,
+    metavar="<shell>",
+    type=click.Choice(cli_util.shells),
+)
+def install_script(shell: Optional[str]) -> None:
+    """Install shell autocompletion script."""
+    from click_completion import install
+
+    selected_shell = cli_util.validate_shell(shell)
+    shell, path = install(selected_shell)
+    click.secho(f"{shell} completion installed in {path}", fg="green")
+
+
+@completion.command()
+@click.argument(
+    "shell",
+    required=False,
+    metavar="<shell>",
+    type=click.Choice(cli_util.shells),
+)
+def show(shell: Optional[str]) -> None:
+    """Show the autocompletion script for inspection."""
+    from click_completion import get_code
+
+    selected_shell = cli_util.validate_shell(shell)
+    click.echo(get_code(selected_shell))
+
+
+@completion.command()
+def shells():
+    """List all supported shell types for completion."""
+    click.echo("Supported shell types:")
+    from click_completion import shells
+
+    for shell, doc in shells.items():
+        click.echo(f"  - {shell}: {doc}")
 
 
 if __name__ == "__main__":
