@@ -1,12 +1,9 @@
 import json
-import os
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import click
-from InquirerPy.resolver import prompt
-from rich.console import Console
-from rich.table import Table
 
 
 class PartialMatchGroup(click.Group):
@@ -32,10 +29,19 @@ class PartialMatchGroup(click.Group):
 
 
 class CliUtility:
-    def __init__(self):
-        self.console = Console()
-        self.config_path = self._resolve_config_path()
-        self.settings = self._load()
+    @cached_property
+    def console(self):
+        from rich.console import Console
+
+        return Console()
+
+    @cached_property
+    def config_path(self):
+        return self._resolve_config_path()
+
+    @cached_property
+    def settings(self):
+        return self._load()
 
     def _resolve_config_path(self) -> Path:
         """
@@ -49,6 +55,8 @@ class CliUtility:
         Returns:
             str: Absolute path to the configuration file.
         """
+        import os
+
         base_dir = Path(os.getenv("APPDATA") or Path.home() / ".config")
         config_dir = base_dir / "manga_dm"
         config_dir.mkdir(parents=True, exist_ok=True)
@@ -97,6 +105,8 @@ class CliUtility:
         self.console.print_json(json.dumps(example_json))
 
     def reset(self) -> None:
+        from InquirerPy.resolver import prompt
+
         confirmation = prompt(
             [
                 {
@@ -118,6 +128,8 @@ class CliUtility:
             self.console.print("[yellow]No settings to reset.")
 
     def display_settings(self, settings: Dict[str, Any]) -> None:
+        from rich.table import Table
+
         table = Table(title="Current MangaDM Settings")
         table.add_column("Key", style="cyan")
         table.add_column("Value", style="magenta")

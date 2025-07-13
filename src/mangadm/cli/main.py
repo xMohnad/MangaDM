@@ -4,11 +4,8 @@ from typing import Any, Dict, cast
 
 import click
 from auto_click_auto import enable_click_shell_completion_option
-from InquirerPy.resolver import prompt
-from prompt_toolkit.completion import PathCompleter
 from trogon import tui
 
-from mangadm import MangaDM
 from mangadm.cli import CliUtility, PartialMatchGroup
 from mangadm.components.types import FormatType
 
@@ -62,6 +59,8 @@ def cli():
 )
 def download(json_file, dest, limit, delete, format, update_details):
     """Download manga chapters based on a JSON file."""
+    from mangadm import MangaDM
+
     MangaDM(
         json_file=Path(json_file),
         dest_path=dest,
@@ -75,6 +74,10 @@ def download(json_file, dest, limit, delete, format, update_details):
 @cli.command()
 def configure():
     """Open configuration UI."""
+
+    from InquirerPy.resolver import prompt
+    from prompt_toolkit.completion import PathCompleter
+
     current = cli_util.settings
     style = {
         "completion-menu.completion": "bg:#444444 #ffffff",
