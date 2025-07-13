@@ -1,11 +1,12 @@
 import json
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from rich.console import Console, Group
 from rich.live import Live
 
-from mangadm.components import MangaArchiver
+from mangadm.components.archiver import MangaArchiver
 from mangadm.components.base_component import BaseComponent
 from mangadm.components.types import DownloadResult, DownloadStatus, FormatType, Status
 from mangadm.core.slide_loader import SlideLoader
@@ -42,13 +43,6 @@ class MangaDM(BaseComponent, Status):
         self.format = format
 
         self._results: List[DownloadResult] = []
-        self.details = self.data.get("details", {})
-        manga_name = self.details.get("manganame", "UnknownManga").translate(
-            self.translation_table
-        )
-        source = self.details.get("source")
-        self.base_folder = self.dest_path / f"{manga_name} ({source})"
-        self.base_folder.mkdir(parents=True, exist_ok=True)
 
         self.loader = SlideLoader(console=self.console, save_dir=self.base_folder)
         self.archiver = MangaArchiver(self.console)
@@ -63,26 +57,14 @@ class MangaDM(BaseComponent, Status):
             raise ValueError(
                 f"Unsupported file format: {value}. Please use JSON format."
             )
-        if not isinstance(value, Path):
-            value = Path(value)
-        self.data = self._load_data(value)
         self._json_file = value
+        self.data = self._load_data()
 
     @property
-    def dest_path(self):
-        return self._dest_path
-
-    @dest_path.setter
-    def dest_path(self, value):
-        if not isinstance(value, Path):
-            value = Path(value)
-        value.mkdir(exist_ok=True, parents=True)
-        self._dest_path = value
-
-    @property
-    def data(self):
+    def data(self) -> dict:
+        """Get manga data with validation."""
         if not self._data:
-            raise ValueError("No data available to process.")
+            raise ValueError("No manga data available")
         return self._data
 
     @data.setter
@@ -96,23 +78,48 @@ class MangaDM(BaseComponent, Status):
                     "{ 'details': dict, 'chapters': list }"
                 )
 
-    def _should_stop_processing(self) -> bool:
-        return (
-            self.limit != -1 and (self.failed_count + self.success_count) >= self.limit
-        )
+    @property
+    def dest_path(self):
+        return self._dest_path
 
-    def is_downloaded_chapter(
+    @dest_path.setter
+    def dest_path(self, value):
+        if not isinstance(value, Path):
+            value = Path(value)
+
+        self._dest_path = value
+        details = self.data.get("details", {})
+        manga_name = details.get("manganame", "UnknownManga").translate(
+            self.translation_table
+        )
+        source = details.get("source", "unknown")
+        self.base_folder = self.dest_path / f"{manga_name} ({source})"
+        self.base_folder.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def chapters(self) -> list:
+        """Get chapters list with validation."""
+        return self.data.get("chapters", [])
+
+    @cached_property
+    def details(self) -> Dict:
+        """Get details."""
+        return self.data.get("details", {})
+
+    def _should_stop_processing(self) -> bool:
+        """Check if processing should stop based on limit."""
+        return self.limit > 0 and (self.failed_count + self.success_count) >= self.limit
+
+    def _is_downloaded_chapter(
         self,
         folder: Path,
         temp_folder: Path,
         images: List[str],
     ) -> bool:
         """Check if a chapter is already downloaded using only Path operations and multiple archive extensions."""
-        folder_name = folder.name
-
         # Check if any archive with supported extensions exists
         for ext in [f.value for f in FormatType]:
-            archive_file = folder.with_name(f"{folder_name}.{ext}")
+            archive_file = folder.with_name(f"{folder.name}.{ext}")
             if archive_file.is_file():
                 return True
 
@@ -127,125 +134,132 @@ class MangaDM(BaseComponent, Status):
         if any(self.loader.temp_ext in file.name for file in files):
             return False
 
-        if len(images) == len(files):
-            return True
+        return len(images) == len(files)
 
-        return False
-
-    def _rename(self, temp_path: Path, folder_path: Path):
+    def _load_data(self) -> dict:
+        """Load JSON data from file."""
         try:
-            if folder_path.exists():
-                self.console.log(
-                    f"'{str(temp_path)}' and '{str(folder_path)}' are considered the same on this file system (case-insensitive)."
-                )
-                return False
-            temp_path.rename(folder_path)
+            with open(self.json_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            self.console.log(f"Error loading JSON data: {e}")
+            return {"details": {}, "chapters": []}
+
+    def _save_data(self, file_path: Path, data: Dict) -> bool:
+        """Save current data back to JSON file."""
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
             return True
-        except Exception:
+        except (IOError, OSError) as e:
+            self.console.log(f"Error saving data: {e}")
             return False
 
-    def _load_data(self, file_path: Path) -> List[Dict[str, Any]]:
-        """Load JSON data from a file."""
-        if not file_path.exists():
-            return []
-        try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                return json.load(file)
-        except (json.JSONDecodeError, IOError):
-            return []
+    def create_temp_folder(self, chapter_name: str) -> Path:
+        """Create temporary folder for chapter downloads."""
+        temp_path = self.base_folder / f"{chapter_name}_tmp"
+        temp_path.mkdir(exist_ok=True)
+        return temp_path
 
-    def _save_data(self, file_path: Union[str, Path], data: Dict[str, Any]) -> None:
-        """Save data to a JSON file."""
+    def _rename(self, temp_path: Path, final_path: Path) -> bool:
+        """Rename temporary folder to final chapter name."""
         try:
-            with open(file_path, "w", encoding="utf-8") as file:
-                json.dump(data, file, ensure_ascii=False, indent=4)
-        except (IOError, OSError):
-            return
+            if final_path.exists():
+                self.console.log(f"Path already exists: {final_path}")
+                return False
+            temp_path.rename(final_path)
+            return True
+        except Exception as e:
+            self.console.log(f"Error renaming folder: {e}")
+            return False
 
-    def _setup_manga_dir(self) -> None:
+    def _remove_chapter(self, chapter_data: dict) -> bool:
+        """Remove chapter from data and save."""
+        try:
+            self.data["chapters"].remove(chapter_data)
+            return self._save_data(self.json_file, self.data)
+        except ValueError as e:
+            self.console.log(f"Error removing chapter: {e}")
+            return False
+
+    def _setup_manga_metadata(self) -> None:
+        """Setup manga details and cover image."""
         details_path = self.base_folder / "details.json"
-
-        if not details_path.exists() and self.update_details:
+        details = self.details
+        if not details_path.exists() or self.update_details:
             sanitized_details = {
-                "title": self.details.get("manganame", "UnknownManga"),
-                "author": self.details.get("author"),
-                "artist": self.details.get("artist"),
-                "description": self.details.get("description"),
-                "genre": self.details.get("genre", []),
+                "title": details.get("manganame", "UnknownManga"),
+                "author": details.get("author"),
+                "artist": details.get("artist"),
+                "description": details.get("description"),
+                "genre": details.get("genre", []),
             }
             self._save_data(details_path, sanitized_details)
+        self._download_cover_image()
 
+    def _download_cover_image(self) -> None:
+        """Download manga cover image if needed."""
         cover_url = self.details.get("cover")
         if not cover_url:
-            return  # No cover to process
-
-        cover_filename = Path(f"cover{Path(cover_url).suffix}")
-        cover_path = self.base_folder / cover_filename
-
-        # Skip cover download if file already exists and update is disabled
-        if cover_path.exists() and not self.update_details:
             return
 
-        # Attempt to download the cover
-        self.loader.one(cover_url, cover_filename)
+        cover_path = self.base_folder / f"cover{Path(cover_url).suffix}"
+        if not cover_path.exists() or self.update_details:
+            self.loader.one(cover_url, Path(cover_path.name))
 
-    def _start(self) -> None:
-        self._setup_manga_dir()
-        self.chapters = self.data.get("chapters", [])
+    def _process_chapters(self) -> None:
+        """Process all chapters in the manga data."""
 
-        for count, entry in enumerate(self.chapters[:], start=1):
+        chapters = self.chapters[:]
+        total_chapters = len(chapters)
+        for idx, chapter in enumerate(chapters, 1):
             if self._should_stop_processing():
                 break
+            self._process_chapter(chapter, idx, total_chapters)
 
-            # Prepare paths
-            title: str = entry.get("title", "UnknownChapter").translate(
-                self.translation_table
+    def _process_chapter(
+        self, chapter: dict, current_idx: int, total_chapters: int
+    ) -> None:
+        """Process a single manga chapter."""
+        title = chapter.get("title", "UnknownChapter").translate(self.translation_table)
+        images = chapter.get("images", [])
+
+        if not images:
+            self.console.log(f"Chapter [green]{title}[/] has no images.")
+            return
+
+        final_path = self.base_folder / title
+        temp_path = self.create_temp_folder(title)
+
+        if self._is_downloaded_chapter(final_path, temp_path, images):
+            self._results.append(DownloadResult(DownloadStatus.SKIPPED, final_path))
+            return
+
+        self.loader.totel = (total_chapters, self.skipped_count, current_idx)
+        self.loader.save_dir = temp_path
+        self.loader.urls = images
+        self.loader.all()
+
+        if self.loader.all_success:
+            self.loader.clear_results()
+            self._results.append(
+                DownloadResult(DownloadStatus.SUCCESS, self.loader.save_dir)
             )
-            folder = self.base_folder / title
-            temp_folder = self.base_folder / f"{title}{self.loader.temp_ext}"
-
-            images = entry.get("images", [])
-            if not images:
-                self.console.log(
-                    f"Chapter [green]{title}[/] has no downloadable images."
-                )
-                continue
-
-            # Skip if already downloaded
-            if self.is_downloaded_chapter(folder, temp_folder, images):
-                self._results.append(
-                    DownloadResult(DownloadStatus.SKIPPED, self.loader.save_dir)
-                )
-                continue
-
-            # Set up loader and start download
-            self.loader.totel = (len(self.chapters), self.skipped_count, count)
-            self.loader.save_dir = temp_folder
-            self.loader.urls = images
-
-            self.loader.all()
-
-            if self.loader.all_success:
-                self.loader.clear_results()
-                self._results.append(
-                    DownloadResult(DownloadStatus.SUCCESS, self.loader.save_dir)
-                )
-
-                if self._rename(temp_folder, folder):
-                    self.archiver.create_archiver(folder, self.format)
-                    if self.delete_on_success:
-                        self.data["chapters"].remove(entry)
-                        self._save_data(self.json_file, self.data)
-            else:
-                self._results.append(
-                    DownloadResult(DownloadStatus.FAILED, self.loader.save_dir)
-                )
-
+            if self._rename(temp_path, final_path):
+                self.archiver.create_archiver(final_path, self.format)
+                if self.delete_on_success:
+                    self._remove_chapter(chapter)
+        else:
+            self._results.append(
+                DownloadResult(DownloadStatus.FAILED, self.loader.save_dir)
+            )
         self.loader.spinner.remove_task(self.loader.spinner_task)
 
     def start(self) -> None:
         """Start download process"""
         with Live(
-            Group(self.loader.spinner, self.loader.progress), console=self.console
+            Group(self.loader.spinner, self.loader.progress),
+            console=self.console,
         ):
-            self._start()
+            self._setup_manga_metadata()
+            self._process_chapters()
