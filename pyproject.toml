@@ -1,0 +1,55 @@
+[project]
+name = "MangaDM"
+version = "0.6.0"
+description = "A command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file."
+authors = [{ name = "xMohnad" }]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+
+dependencies = [
+  "aiohttp>=3.12.13",
+  "auto-click-auto>=0.1.5",
+  "click>=8.2.1",
+  "ebooklib>=0.19",
+  "inquirerpy>=0.3.4",
+  "rich>=14.0.0",
+  "trogon>=0.6.0",
+]
+
+classifiers = [
+  "Environment :: Console",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Terminals",
+  "Topic :: Software Development :: Libraries",
+  "Typing :: Typed",
+]
+
+keywords = ["terminal"]
+
+[project.urls]
+Repository = "https://github.com/xMohnad/MangaDM"
+Source = "https://github.com/xMohnad/MangaDM"
+Issues = "https://github.com/xMohnad/MangaDM/issues"
+Discussions = "https://github.com/xMohnad/MangaDM/discussions"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mangadm"]
+
+[project.scripts]
+mangadm = "mangadm.cli.main:cli"
