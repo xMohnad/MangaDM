@@ -1,10 +1,8 @@
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, cast
 
 import click
 from auto_click_auto import enable_click_shell_completion_option
-from trogon import tui
 
 from mangadm.cli import CliUtility, PartialMatchGroup
 from mangadm.components.types import FormatType
@@ -12,14 +10,13 @@ from mangadm.components.types import FormatType
 cli_util = CliUtility()
 
 
-@tui()
 @click.group(
     help="A CLI tool for downloading manga chapters based on a JSON metadata file.",
     context_settings={"help_option_names": ["-h", "--help"]},
     cls=PartialMatchGroup,
 )
 @enable_click_shell_completion_option(program_name="mangadm")
-@click.version_option(version("mangadm"), "--version", "-V")
+@click.version_option(cli_util.version, "--version", "-V")
 def cli():
     pass
 
@@ -156,6 +153,13 @@ def reset():
 def view():
     """View current settings."""
     cli_util.display_settings(cli_util.settings)
+
+
+@cli.command(name="tui", help="Open interactive TUI.")
+def run_tui():
+    from trogon import tui
+
+    tui()(cli)()
 
 
 if __name__ == "__main__":

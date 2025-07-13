@@ -43,6 +43,16 @@ class CliUtility:
     def settings(self):
         return self._load()
 
+    @cached_property
+    def version(self):
+        """Return the package version or 'N/A' if not found or error occurs."""
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            return version("mangadm")
+        except (PackageNotFoundError, Exception):
+            return "N/A"
+
     def _resolve_config_path(self) -> Path:
         """
         Get the path to the configuration file.
