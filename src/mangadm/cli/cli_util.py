@@ -55,6 +55,12 @@ class CliUtility:
         except (PackageNotFoundError, Exception):
             return "N/A"
 
+    @cached_property
+    def formats(self):
+        from mangadm import FormatType
+
+        return [ft.value for ft in FormatType]
+
     @property
     def shells(self):
         return sorted(self.SHELL_CHOICES)

@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional, cast
 import click
 
 from mangadm.cli import CliUtility, PartialMatchGroup
-from mangadm.components.types import FormatType
 
 cli_util = CliUtility()
 
@@ -42,7 +41,7 @@ def cli():
 @click.option(
     "--format",
     "-f",
-    type=click.Choice([ft.value for ft in FormatType], case_sensitive=False),
+    type=click.Choice(cli_util.formats, case_sensitive=False),
     default=cli_util.settings.get("format", "cbz"),
     help="Download format.",
 )
@@ -54,7 +53,7 @@ def cli():
 )
 def download(json_file, dest, limit, delete, format, update_details):
     """Download manga chapters based on a JSON file."""
-    from mangadm import MangaDM
+    from mangadm import FormatType, MangaDM
 
     MangaDM(
         json_file=Path(json_file),
@@ -102,7 +101,7 @@ def configure():
             "type": "list",
             "name": "format",
             "message": "Choose format:",
-            "choices": [ft.value for ft in FormatType],
+            "choices": cli_util.formats,
             "default": current.get("format", "cbz"),
         },
         {
