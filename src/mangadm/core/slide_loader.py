@@ -4,7 +4,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import aiohttp
+from aiohttp import ClientResponseError, ClientTimeout
 from aiohttp.client import ClientSession
 from rich.console import Console
 from rich.progress import (
@@ -152,7 +152,7 @@ class SlideLoader(BaseComponent, Status):
 
     @asynccontextmanager
     async def get_session(self):
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             yield session
 
     async def download(
@@ -166,7 +166,7 @@ class SlideLoader(BaseComponent, Status):
         temp_filepath = self.save_dir / f"{filename.name}{self.temp_ext}"
         completed = self.get_size(temp_filepath)
         headers = {"Range": f"bytes={completed}-"} if completed else {}
-        timeout = aiohttp.ClientTimeout(total=self.timeout)
+        timeout = ClientTimeout(total=self.timeout)
         id = None
         try:
             async with session.get(url, timeout=timeout, headers=headers) as response:
@@ -191,7 +191,7 @@ class SlideLoader(BaseComponent, Status):
                 self.progress.remove_task(task_id)
                 return DownloadResult(DownloadStatus.SUCCESS, final_filepath, url=url)
 
-        except aiohttp.ClientResponseError as e:
+        except ClientResponseError as e:
             result = DownloadResult(DownloadStatus.REPLACED, temp_filepath, e, url=url)
             if e.status in [401, 403, 404]:
                 self.save_image_error(final_filepath)
