@@ -1,6 +1,7 @@
 # MangaDM - Manga Download Manager
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/xMohnad/MangaDM)
 
 **MangaDM** is a command-line tool and Python library for downloading manga chapters based on the metadata specified in JSON files.
 
