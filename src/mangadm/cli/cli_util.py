@@ -1,12 +1,9 @@
 import json
-import os
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import click
-from InquirerPy.resolver import prompt
-from rich.console import Console
-from rich.table import Table
 
 
 class PartialMatchGroup(click.Group):
@@ -32,10 +29,53 @@ class PartialMatchGroup(click.Group):
 
 
 class CliUtility:
-    def __init__(self):
-        self.console = Console()
-        self.config_path = self._resolve_config_path()
-        self.settings = self._load()
+    SHELL_CHOICES = ["bash", "fish", "zsh", "powershell"]
+
+    @cached_property
+    def console(self):
+        from rich.console import Console
+
+        return Console()
+
+    @cached_property
+    def config_path(self):
+        return self._resolve_config_path()
+
+    @cached_property
+    def settings(self):
+        return self._load()
+
+    @cached_property
+    def version(self):
+        """Return the package version or 'N/A' if not found or error occurs."""
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            return version("mangadm")
+        except (PackageNotFoundError, Exception):
+            return "N/A"
+
+    @cached_property
+    def formats(self):
+        from mangadm import FormatType
+
+        return [ft.value for ft in FormatType]
+
+    @property
+    def shells(self):
+        return sorted(self.SHELL_CHOICES)
+
+    def validate_shell(self, shell: Optional[str]) -> str:
+        """Validate and return the shell name, or auto-detect if None."""
+        from click_completion import get_auto_shell
+
+        selected_shell = shell or get_auto_shell()
+        if selected_shell not in self.shells:
+            raise click.BadParameter(
+                f"Unsupported shell: {selected_shell}. "
+                f"Available options: {', '.join(self.shells)}"
+            )
+        return selected_shell
 
     def _resolve_config_path(self) -> Path:
         """
@@ -49,6 +89,8 @@ class CliUtility:
         Returns:
             str: Absolute path to the configuration file.
         """
+        import os
+
         base_dir = Path(os.getenv("APPDATA") or Path.home() / ".config")
         config_dir = base_dir / "manga_dm"
         config_dir.mkdir(parents=True, exist_ok=True)
@@ -97,6 +139,8 @@ class CliUtility:
         self.console.print_json(json.dumps(example_json))
 
     def reset(self) -> None:
+        from InquirerPy.resolver import prompt
+
         confirmation = prompt(
             [
                 {
@@ -118,6 +162,8 @@ class CliUtility:
             self.console.print("[yellow]No settings to reset.")
 
     def display_settings(self, settings: Dict[str, Any]) -> None:
+        from rich.table import Table
+
         table = Table(title="Current MangaDM Settings")
         table.add_column("Key", style="cyan")
         table.add_column("Value", style="magenta")

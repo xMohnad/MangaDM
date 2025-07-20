@@ -20,6 +20,7 @@
     - [view](#view)
     - [reset](#reset)
     - [tui](#tui)
+    - [completion](#completion)
   - [General Notes](#general-notes)
 
 - [Library Usage](#library-usage)
@@ -108,10 +109,27 @@ Once installed, you can use the `mangadm` command to download manga chapters.
 
 - **Purpose**: Open Textual TUI.
 
+### `completion`
+
+- **purpose**: the `completion` command group manages shell completion scripts for the cli tool.
+
+- **subcommands**:
+
+  - `install`: installs shell autocompletion script for the specified shell.
+
+    - **arguments**:
+      - `shell`: the shell type to install completion for (e.g., bash, zsh, fish).
+
+  - `show`: displays the autocompletion script for inspection without installing.
+
+    - **arguments**:
+      - `shell`: the shell type to show completion script for.
+
+  - `shells`: lists all supported shell types for which completion is available.
+
 ### General Notes
 
 - **Versioning**: The version is displayed with the `--version, -V` flag.
-- **Completion**: The CLI supports shell completion using `auto_click_auto`. The `--autocomplete` flag is available to enable shell completion for the default shell.
 - **More**: Use `--help` flag in any of the commands.
 
 ______________________________________________________________________

@@ -10,8 +10,8 @@ requires-python = ">=3.12"
 
 dependencies = [
   "aiohttp>=3.12.13",
-  "auto-click-auto>=0.1.5",
   "click>=8.2.1",
+  "click-completion>=0.5.2",
   "ebooklib>=0.19",
   "inquirerpy>=0.3.4",
   "rich>=14.0.0",

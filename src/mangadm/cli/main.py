@@ -1,28 +1,18 @@
-from importlib.metadata import version
-from pathlib import Path
-from typing import Any, Dict, cast
+from typing import Any, Dict, Optional, cast
 
 import click
-from auto_click_auto import enable_click_shell_completion_option
-from InquirerPy.resolver import prompt
-from prompt_toolkit.completion import PathCompleter
-from trogon import tui
 
-from mangadm import MangaDM
 from mangadm.cli import CliUtility, PartialMatchGroup
-from mangadm.components.types import FormatType
 
 cli_util = CliUtility()
 
 
-@tui()
 @click.group(
     help="A CLI tool for downloading manga chapters based on a JSON metadata file.",
     context_settings={"help_option_names": ["-h", "--help"]},
     cls=PartialMatchGroup,
 )
-@enable_click_shell_completion_option(program_name="mangadm")
-@click.version_option(version("mangadm"), "--version", "-V")
+@click.version_option(cli_util.version, "--version", "-V")
 def cli():
     pass
 
@@ -50,7 +40,7 @@ def cli():
 @click.option(
     "--format",
     "-f",
-    type=click.Choice([ft.value for ft in FormatType], case_sensitive=False),
+    type=click.Choice(cli_util.formats, case_sensitive=False),
     default=cli_util.settings.get("format", "cbz"),
     help="Download format.",
 )
@@ -62,6 +52,10 @@ def cli():
 )
 def download(json_file, dest, limit, delete, format, update_details):
     """Download manga chapters based on a JSON file."""
+    from pathlib import Path
+
+    from mangadm import FormatType, MangaDM
+
     MangaDM(
         json_file=Path(json_file),
         dest_path=dest,
@@ -75,6 +69,10 @@ def download(json_file, dest, limit, delete, format, update_details):
 @cli.command()
 def configure():
     """Open configuration UI."""
+
+    from InquirerPy.resolver import prompt
+    from prompt_toolkit.completion import PathCompleter
+
     current = cli_util.settings
     style = {
         "completion-menu.completion": "bg:#444444 #ffffff",
@@ -104,7 +102,7 @@ def configure():
             "type": "list",
             "name": "format",
             "message": "Choose format:",
-            "choices": [ft.value for ft in FormatType],
+            "choices": cli_util.formats,
             "default": current.get("format", "cbz"),
         },
         {
@@ -153,6 +151,60 @@ def reset():
 def view():
     """View current settings."""
     cli_util.display_settings(cli_util.settings)
+
+
+@cli.command(name="tui", help="Open interactive TUI.")
+def run_tui():
+    from trogon import tui
+
+    tui()(cli)()
+
+
+@cli.group(cls=PartialMatchGroup)
+def completion() -> None:
+    """Manage shell completion scripts for this CLI tool."""
+    pass
+
+
+@completion.command(name="install")
+@click.argument(
+    "shell",
+    required=False,
+    metavar="<shell>",
+    type=click.Choice(cli_util.shells),
+)
+def install_script(shell: Optional[str]) -> None:
+    """Install shell autocompletion script."""
+    from click_completion import install
+
+    selected_shell = cli_util.validate_shell(shell)
+    shell, path = install(selected_shell)
+    click.secho(f"{shell} completion installed in {path}", fg="green")
+
+
+@completion.command()
+@click.argument(
+    "shell",
+    required=False,
+    metavar="<shell>",
+    type=click.Choice(cli_util.shells),
+)
+def show(shell: Optional[str]) -> None:
+    """Show the autocompletion script for inspection."""
+    from click_completion import get_code
+
+    selected_shell = cli_util.validate_shell(shell)
+    click.echo(get_code(selected_shell))
+
+
+@completion.command()
+def shells():
+    """List all supported shell types for completion."""
+    click.echo("Supported shell types:")
+    from click_completion import shells
+
+    for shell, doc in shells.items():
+        click.echo(f"  - {shell}: {doc}")
 
 
 if __name__ == "__main__":
