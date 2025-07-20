@@ -46,16 +46,6 @@ class CliUtility:
         return self._load()
 
     @cached_property
-    def version(self):
-        """Return the package version or 'N/A' if not found or error occurs."""
-        from importlib.metadata import PackageNotFoundError, version
-
-        try:
-            return version("mangadm")
-        except (PackageNotFoundError, Exception):
-            return "N/A"
-
-    @cached_property
     def formats(self):
         from mangadm import FormatType
 

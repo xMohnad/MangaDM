@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 MangaDM: "type[MangaDMType]"
 FormatType: "type[FormatTypeType]"
 
+__version__ = "0.6.0"
 __all__ = ["MangaDM", "FormatType"]
 
 

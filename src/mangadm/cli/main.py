@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional, cast
 
 import click
 
+from mangadm import __version__ as version
 from mangadm.cli import CliUtility, PartialMatchGroup
 
 cli_util = CliUtility()
@@ -12,7 +13,7 @@ cli_util = CliUtility()
     context_settings={"help_option_names": ["-h", "--help"]},
     cls=PartialMatchGroup,
 )
-@click.version_option(cli_util.version, "--version", "-V")
+@click.version_option(version, "--version", "-V")
 def cli():
     pass
 
