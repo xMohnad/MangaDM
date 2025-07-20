@@ -4,8 +4,7 @@ version = "0.6.0"
 description = "A command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file."
 authors = [{ name = "xMohnad" }]
 readme = "README.md"
-license = "MIT"
-license-files = ["LICENSE"]
+license = { file = "LICENSE" }
 requires-python = ">=3.12"
 
 dependencies = [
