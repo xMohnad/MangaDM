@@ -1,20 +1,20 @@
 [project]
 name = "MangaDM"
 dynamic = ["version"]
-description = "A command-line tool and Python library for downloading manga chapters based on the metadata specified in a JSON file."
+description = "A tool for downloading manga."
 authors = [{ name = "xMohnad" }]
 readme = "README.md"
-license = { file = "LICENSE" }
-requires-python = ">=3.12"
+license = "MIT"
+requires-python = ">=3.10"
 
 dependencies = [
   "aiohttp>=3.12.13",
-  "click>=8.2.1",
-  "click-completion>=0.5.2",
+  "dacite>=1.9.2",
   "ebooklib>=0.19",
   "inquirerpy>=0.3.4",
+  "pyyaml>=6.0.2",
   "rich>=14.0.0",
-  "trogon>=0.6.0",
+  "typer>=0.19.2",
 ]
 
 classifiers = [
@@ -22,26 +22,17 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Terminals",
-  "Topic :: Software Development :: Libraries",
   "Typing :: Typed",
 ]
 
-keywords = ["terminal"]
-
 [project.urls]
-Repository = "https://github.com/xMohnad/MangaDM"
-Source = "https://github.com/xMohnad/MangaDM"
+Homepage = "https://github.com/xMohnad/MangaDM"
 Issues = "https://github.com/xMohnad/MangaDM/issues"
-Discussions = "https://github.com/xMohnad/MangaDM/discussions"
-
-[tool.setuptools]
-include-package-data = true
-
-[tool.uv]
-package = true
 
 [build-system]
 requires = ["setuptools>=61.0.0", "wheel"]
@@ -54,4 +45,16 @@ version = { attr = "mangadm.__version__" }
 packages = ["src/mangadm"]
 
 [project.scripts]
-mangadm = "mangadm.cli.main:cli"
+mangadm = "mangadm.cli:app"
+
+[tool.uv]
+package = true
+
+[tool.pyright]
+reportUnusedCallResult = false
+
+[tool.ruff]
+line-length = 120
+
+[dependency-groups]
+dev = ["codespell>=2.4.1", "ruff>=0.12.9", "ptpython>=3.0.0"]
