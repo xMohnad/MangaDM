@@ -1,4 +1,4 @@
-from mangadm.cli.main import cli
+from mangadm.cli import app
 
 if __name__ == "__main__":
-    cli()
+    app()
