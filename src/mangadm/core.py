@@ -68,6 +68,7 @@ T = TypeVar("T")
 
 
 def temp_path(path: Path) -> Path:
+    """Return a temporary path derived from the given file or folder path."""
     return path.with_name(path.name + TEMP_EXT)
 
 
@@ -114,6 +115,33 @@ def run_async(
 
 
 class MangaDM:
+    """Manage the full manga download and archiving workflow.
+
+    The class automates downloading manga chapters from URLs listed in a JSON file
+    or Manga object.
+
+
+    Attributes:
+        manga (Manga): Parsed manga metadata.
+        dest_path (Path): Output directory for downloads.
+        limit (int): Maximum chapters to process (-1 means all).
+        format (FormatType): Output archive format
+        update_details (bool): Whether to re-download metadata and cover image.
+        chunk_size (int): Download chunk size in bytes.
+        archive_existing (bool): Whether to archive existing complete chapters.
+        retry_server_errors (bool): Whether to retry on 5xx HTTP responses.
+        retries (int): Maximum number of retry attempts per request.
+        manga_folder (Path): Directory containing all manga chapters and files.
+        details_path (Path): Path to stored manga metadata JSON file.
+        cover_path (Path): Path to the downloaded cover image.
+        _progress (Progress): Progress bar for per-file downloads.
+        _spinner (Progress): Spinner display for chapter-level status.
+        _semaphore (asyncio.Semaphore): Concurrency limiter for download tasks.
+        _timeout (ClientTimeout): Global network timeout configuration.
+        _archiver (MangaArchiver): Utility for creating archive.
+        logger (logging.Logger): Logger configured with RichHandler.
+    """
+
     def __init__(
         self,
         json: Path | Manga,
@@ -129,6 +157,21 @@ class MangaDM:
         archive_existing: bool = True,
         retry_server_errors: bool = True,
     ) -> None:
+        """Initialize MangaDM instance with configuration.
+
+        Args:
+            json (Path | Manga): Manga JSON path or Manga object.
+            dest_path (Path | None, optional): Destination directory. Defaults to current path.
+            limit (int, optional): Maximum chapters to download. -1 means no limit.
+            format (FormatType, optional): Archive format (cbz or epub). Defaults to cbz.
+            update_details (bool, optional): If True, re-download manga metadata. Defaults to False.
+            timeout (int, optional): Network timeout in seconds. Defaults to 30.
+            chunk_size (int, optional): Download chunk size in bytes. Defaults to 1024.
+            max_concurrent (int, optional): Maximum concurrent downloads. Defaults to 4.
+            retries (int, optional): Maximum retry attempts per file. Defaults to 3.
+            archive_existing (bool, optional): If True, archive completed chapters automatically. Defaults to True.
+            retry_server_errors (bool, optional): Retry on server errors (5xx). Defaults to True.
+        """
         self.manga: Manga = json if isinstance(json, Manga) else Manga.from_json_file(json)
         self.dest_path: Path = dest_path or Path(".")
         self.limit: int = limit
@@ -177,6 +220,7 @@ class MangaDM:
 
     @cached_property
     def _spinner_task(self) -> TaskID:
+        """Initialize spinner task for chapter-level progress."""
         return self._spinner.add_task(
             "",
             total=0,
@@ -185,7 +229,16 @@ class MangaDM:
         )
 
     async def _handle_http_error(self, e: aiohttp.ClientResponseError, temp: Path, image_path: Path) -> bool:
-        """Return True if retry is allowed, False if not."""
+        """Handle specific HTTP errors and decide whether to retry.
+
+        Args:
+            e (aiohttp.ClientResponseError): The raised HTTP exception.
+            temp (Path): Temporary download file path.
+            image_path (Path): Target image path.
+
+        Returns:
+            bool: True if retry should occur, False otherwise.
+        """
         if e.status in (401, 403, 404):
             from mangadm.assets import placeholder_image
 
@@ -221,6 +274,13 @@ class MangaDM:
         return True
 
     async def download(self, url: str, session: ClientSession, path: Path) -> None:
+        """Save manga metadata and cover image before downloading chapters.
+
+        Writes details JSON and downloads the cover image if missing or outdated.
+
+        Args:
+            session (ClientSession): Active aiohttp client session.
+        """
         temp = temp_path(path)
 
         for attempt in range(1, self.retries + 1):
@@ -266,6 +326,13 @@ class MangaDM:
                 await asyncio.sleep(delay)
 
     async def _prepare_details(self, session: ClientSession) -> None:
+        """Save manga metadata and cover image before downloading chapters.
+
+        Writes details JSON and downloads the cover image if missing or outdated.
+
+        Args:
+            session (ClientSession): Active aiohttp client session.
+        """
         if not self.details_path.exists() or self.update_details:
             self.manga.details.to_json(self.details_path)
 
@@ -275,11 +342,27 @@ class MangaDM:
             await self.download(cover, session, cover_path)
 
     async def _task(self, url: str, image_path: Path, session: ClientSession) -> None:
+        """Wrapper around download with semaphore limiting concurrency.
+
+        Args:
+            url (str): Image URL.
+            image_path (Path): Output file path.
+            session (ClientSession): Active aiohttp client session.
+        """
         async with self._semaphore:
             await self.download(url, session, image_path)
             self._spinner.update(self._spinner_task, advance=1)
 
     def _skip_chapter(self, path: Path, chapter: Chapter) -> bool:
+        """Determine if a chapter should be skipped.
+
+        Args:
+            path (Path): Chapter folder path.
+            chapter (Chapter): Chapter metadata.
+
+        Returns:
+            bool: True if chapter should be skipped.
+        """
         if not chapter.images:
             self.logger.warning(f"Chapter '{chapter.title}' has no images.")
             return True
@@ -299,6 +382,7 @@ class MangaDM:
 
     @run_async
     async def start(self) -> None:
+        """Start the manga download process."""
         self.manga_folder.mkdir(parents=True, exist_ok=True)
         async with AsyncExitStack() as stack:
             stack.enter_context(self._progress)

@@ -17,14 +17,16 @@ IMAGE_EXTENSIONS: list[str] = [".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".png"]
 
 
 class MangaArchiver:
-    def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(__name__)
+    """Utility class to create manga archives in different formats (CBZ, EPUB)."""
+
+    logger: logging.Logger = logging.getLogger(__name__)
 
     def get_image_paths(self, folder_path: Path) -> list[Path]:
         """Return sorted list of image paths from the given folder."""
         return sorted([file for file in folder_path.absolute().rglob("*") if file.suffix.lower() in IMAGE_EXTENSIONS])
 
     def _make_file(self, folder: Path, format: FormatType) -> Path:
+        """Return a Path for the output archive file based on format."""
         return folder.with_suffix(f".{format.value}")
 
     def create_cbz(self, folder_path: Path, **_: object) -> None:
@@ -73,6 +75,13 @@ class MangaArchiver:
             self.logger.exception("Error creating EPUB '%s': %r", epub_file.name, e)
 
     def create_archive(self, folder: Path, format: FormatType, title: str = "") -> None:
+        """Dispatch to the correct archive creation method based on format.
+
+        Args:
+            folder (Path): Folder containing image files.
+            format (FormatType): Target archive format (e.g., cbz or epub).
+            title (str, optional): Optional title for formats that support it.
+        """
         archiver: Callable[..., None] | None = getattr(self, f"create_{format.value}", None)
         if callable(archiver):
             self.logger.info("Starting archive creation for '%s' as %s", folder, format.value)

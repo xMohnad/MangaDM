@@ -4,6 +4,13 @@ ROOT: Path = Path(__file__).parent
 
 
 def placeholder_image() -> bytes:
+    """Return the bytes of a default placeholder image.
+
+    Used to replace missing or unavailable manga images during download.
+
+    Returns:
+        bytes: Contents of the placeholder image file.
+    """
     return (ROOT / "placeholder_image.webp").read_bytes()
 
 
