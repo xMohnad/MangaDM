@@ -134,8 +134,9 @@ def show_config(
     [bold cyan]Show[/] the current [yellow]config[/]uration.
 
     Options are mapped directly to YAML keys:
-    • --format -> [green]format[/green]
-    • --archive-existing -> [green]archive_existing[/green]
+
+    * --format -> [green]format[/green]
+    * --archive-existing -> [green]archive_existing[/green]
     """
     if path_only:
         typer.echo(__config__)
