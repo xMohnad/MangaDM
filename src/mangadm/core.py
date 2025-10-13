@@ -114,7 +114,7 @@ def run_async(
     return wrapper
 
 
-class MangaDM:
+class Downloader:
     """Manage the full manga download and archiving workflow.
 
     The class automates downloading manga chapters from URLs listed in a JSON file

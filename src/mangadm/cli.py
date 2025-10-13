@@ -107,9 +107,9 @@ def download(
 ) -> None:
     """[bold cyan]Download[/] manga from a given JSON metadata file."""
 
-    from mangadm.core import MangaDM
+    from mangadm.core import Downloader
 
-    MangaDM(
+    Downloader(
         json_file,
         dest_path=Path(dest),
         limit=limit,
