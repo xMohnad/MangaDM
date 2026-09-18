@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+import yaml
 
 from mangadm import __config__, __version__
 from mangadm.schema.formats import FormatType
@@ -18,7 +19,7 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-@app.callback(context_settings=dict(help_option_names=["-h", "--help"]))
+@app.callback(context_settings={"help_option_names": ["-h", "--help"]})
 def common(
     ctx: typer.Context,
     _: Annotated[
@@ -45,8 +46,6 @@ def common(
     # Set logging level
     logger = logging.getLogger("mangadm")
     logger.setLevel(logging.DEBUG if verbose else logging.WARNING)
-
-    import yaml
 
     if __config__.exists():
         with __config__.open() as f:
@@ -141,8 +140,6 @@ def show_config(
     if path_only:
         typer.echo(__config__)
         raise typer.Exit()
-
-    import yaml
 
     if __config__.exists():
         with __config__.open() as f:

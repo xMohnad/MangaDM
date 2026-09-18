@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
-from collections.abc import Awaitable, Coroutine
+from collections.abc import Awaitable, Callable, Coroutine
 from contextlib import AsyncExitStack, suppress
 from functools import cached_property, wraps
 from pathlib import Path
-from typing import Callable, Final, TypeVar
+from typing import Final, TypeVar
 
 import aiohttp
 from aiohttp import ClientSession, ClientTimeout
@@ -424,7 +424,7 @@ class Downloader:
                     self.logger.debug("Total skipped %d existing images in chapter '%s'", skipped, chapter.title)
 
                 errs = await asyncio.gather(*tasks, return_exceptions=True)
-                if any([isinstance(err, BaseException) for err in errs]):
+                if any(isinstance(err, BaseException) for err in errs):
                     self.logger.warning(f"Chapter '{chapter.title}' has errors. Skipping.")
                     continue
 

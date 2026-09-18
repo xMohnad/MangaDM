@@ -1,14 +1,12 @@
-# pyright: reportUnknownMemberType=false
-
 from __future__ import annotations
 
 import logging
 import shutil
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
-from ebooklib import epub  # pyright: ignore[reportMissingTypeStubs]
+from ebooklib import epub
 
 from mangadm.assets import build_chapter_content
 from mangadm.schema.formats import FormatType
@@ -41,7 +39,7 @@ class MangaArchiver:
 
             shutil.rmtree(folder)
             self.logger.info("CBZ archive '%s' created successfully and folder removed", cbz_file.name)
-        except (IOError, OSError):
+        except OSError:
             self.logger.exception(f"Error creating `{cbz_file.name}`")
 
     def create_epub(self, folder_path: Path, title: str = "", **_: object) -> None:
@@ -71,8 +69,8 @@ class MangaArchiver:
             epub.write_epub(epub_file, book)
             shutil.rmtree(folder)
             self.logger.info("EPUB archive '%s' created successfully and folder removed", epub_file.name)
-        except (IOError, OSError) as e:
-            self.logger.exception("Error creating EPUB '%s': %r", epub_file.name, e)
+        except OSError:
+            self.logger.exception("Error creating EPUB '%s'", epub_file.name)
 
     def create_archive(self, folder: Path, format: FormatType, title: str = "") -> None:
         """Dispatch to the correct archive creation method based on format.
