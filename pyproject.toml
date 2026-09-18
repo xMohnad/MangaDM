@@ -1,21 +1,21 @@
 [project]
 name = "MangaDM"
-version = "0.6.0"
+version = "0.7.0"
 description = "A tool for downloading manga."
 authors = [{ name = "xMohnad" }]
-readme = "README.md"
-license = "MIT"
-requires-python = ">=3.10"
 
 dependencies = [
   "aiohttp>=3.12.13",
   "dacite>=1.9.2",
   "ebooklib>=0.19",
-  "inquirerpy>=0.3.4",
   "pyyaml>=6.0.2",
   "rich>=14.0.0",
   "typer>=0.19.2",
 ]
+
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
 
 classifiers = [
   "Environment :: Console",
@@ -30,25 +30,28 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+keywords = ["terminal"]
+
 [project.urls]
 Homepage = "https://github.com/xMohnad/MangaDM"
+Repository = "https://github.com/xMohnad/MangaDM"
 Issues = "https://github.com/xMohnad/MangaDM/issues"
 
+[tool.uv]
+package = true
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [build-system]
-requires = ["uv_build>=0.8.11,<0.10.0"]
+requires = ["uv_build>=0.11.30,<0.12"]
 build-backend = "uv_build"
 
 [project.scripts]
 mangadm = "mangadm.cli:app"
 
-[tool.uv]
-package = true
-
-[tool.pyright]
-reportUnusedCallResult = false
-
 [tool.ruff]
 line-length = 120
 
-[dependency-groups]
-dev = ["codespell>=2.4.1", "ruff>=0.12.9", "ptpython>=3.0.0"]
+[tool.pyright]
+typeCheckingMode = "standard"
