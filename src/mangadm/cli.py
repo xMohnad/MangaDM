@@ -13,7 +13,7 @@ from mangadm.schema.formats import FormatType
 app: typer.Typer = typer.Typer(help="A tool for downloading manga.", rich_markup_mode="rich")
 
 
-def version_callback(value: bool) -> None:
+def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f"mangadm, version {__version__}")
         raise typer.Exit()
@@ -30,7 +30,7 @@ def common(
             help="Show the [bold cyan]version[/] and exit.",
             is_eager=True,
             is_flag=True,
-            callback=version_callback,
+            callback=_version_callback,
         ),
     ] = False,
     verbose: Annotated[
@@ -43,6 +43,7 @@ def common(
         ),
     ] = False,
 ) -> None:
+    """Configure global CLI options and context."""
     # Set logging level
     logger = logging.getLogger("mangadm")
     logger.setLevel(logging.DEBUG if verbose else logging.WARNING)
@@ -105,7 +106,6 @@ def download(
     ] = True,
 ) -> None:
     """[bold cyan]Download[/] manga from a given JSON metadata file."""
-
     from mangadm.core import Downloader
 
     Downloader(
@@ -129,8 +129,7 @@ def show_config(
         bool, typer.Option("--path", "-p", help="Show only the config file [bold cyan]path[/]")
     ] = False,
 ) -> None:
-    """
-    [bold cyan]Show[/] the current [yellow]config[/]uration.
+    """[bold cyan]Show[/] the current [yellow]config[/]uration.
 
     Options are mapped directly to YAML keys:
 

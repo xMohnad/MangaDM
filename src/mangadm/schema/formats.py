@@ -4,8 +4,7 @@ from enum import Enum
 
 
 class FormatType(str, Enum):
-    """
-    Enum representing supported output formats for manga archives.
+    """Enum representing supported output formats for manga archives.
 
     Attributes:
         cbz (str): Comic Book ZIP format.
@@ -17,8 +16,7 @@ class FormatType(str, Enum):
 
     @classmethod
     def formats(cls) -> list[str]:
-        """
-        Return a list of all supported format values.
+        """Return a list of all supported format values.
 
         Returns:
             list[str]: A list of supported format strings

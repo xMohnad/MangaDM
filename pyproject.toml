@@ -53,5 +53,12 @@ mangadm = "mangadm.cli:app"
 [tool.ruff]
 line-length = 120
 
+[tool.ruff.lint]
+select = ["D", "F", "I", "B", "UP", "ISC", "TC", "SIM"]
+ignore = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.pyright]
 typeCheckingMode = "standard"

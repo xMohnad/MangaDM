@@ -3,11 +3,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
-from collections.abc import Awaitable, Callable, Coroutine
 from contextlib import AsyncExitStack, suppress
 from functools import cached_property, wraps
 from pathlib import Path
-from typing import Final, TypeVar
+from typing import TYPE_CHECKING, Final, TypeVar
 
 import aiohttp
 from aiohttp import ClientSession, ClientTimeout
@@ -29,6 +28,9 @@ from rich.progress import (
 from mangadm.archiver import MangaArchiver
 from mangadm.schema.formats import FormatType
 from mangadm.schema.manga import Chapter, Manga
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Coroutine
 
 TRANSLATION_TABLE: Final[dict[int, str]] = str.maketrans(
     {
@@ -92,8 +94,7 @@ def retry_delay(
 def run_async(
     func: Callable[..., Coroutine[None, None, T]],
 ) -> Callable[..., T | asyncio.Task[T]]:
-    """
-    Decorator to allow calling an async function directly.
+    """Decorator to allow calling an async function directly.
 
     - If called inside a running event loop, returns asyncio.Task[T].
     - If called outside an event loop, returns T (result of asyncio.run).
@@ -277,9 +278,6 @@ class Downloader:
         """Save manga metadata and cover image before downloading chapters.
 
         Writes details JSON and downloads the cover image if missing or outdated.
-
-        Args:
-            session (ClientSession): Active aiohttp client session.
         """
         temp = temp_path(path)
 

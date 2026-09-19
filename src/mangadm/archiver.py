@@ -3,13 +3,16 @@ from __future__ import annotations
 import logging
 import shutil
 import zipfile
-from collections.abc import Callable
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ebooklib import epub
 
 from mangadm.assets import build_chapter_content
 from mangadm.schema.formats import FormatType
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 IMAGE_EXTENSIONS: list[str] = [".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".png"]
 
