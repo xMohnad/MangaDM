@@ -5,7 +5,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/MangaDM.svg)](https://pypi.python.org/pypi/MangaDM)
 [![Python Version](https://img.shields.io/pypi/pyversions/MangaDM.svg)](https://pypi.python.org/pypi/MangaDM)
 
-**MangaDM** is a powerful command-line tool for downloading manga from JSON metadata file.
+**MangaDM** is a command-line tool for downloading manga from a JSON metadata file.
 
 ---
 
@@ -15,15 +15,14 @@
 pip install MangaDM
 ```
 
-## Command Line Interface
+## Usage
 
-```bash
-mangadm --help
+```sh
+mangadm download manga.json --format epub --dest ~/manga
+mangadm download --help
 ```
 
 ## JSON Structure
-
-Below is an example of the JSON structure required for the input file:
 
 ```json
 {
@@ -32,7 +31,7 @@ Below is an example of the JSON structure required for the input file:
     "title": "Manga Name",
     "cover": "https://example.com/cover.jpg",
     "description": "Description",
-    "genres": ["genre 1", "genre 2", "etc"],
+    "genres": ["genre 1", "genre 2"],
     "author": "string|null",
     "artist": "string|null"
   },
@@ -41,21 +40,9 @@ Below is an example of the JSON structure required for the input file:
       "title": "chapter 256 - Title",
       "images": [
         "https://example.com/image1.jpg",
-        "https://example.com/image2.jpg",
-        "https://example.com/image3.jpg",
-        "https://example.com/image4.jpg",
-        "etc"
-      ]
-    },
-    {
-      "title": "chapter 257 - Title",
-      "images": [
-        "https://example.com/image1.jpg",
-        "https://example.com/image2.jpg",
-        "https://example.com/image3.jpg",
-        "https://example.com/image4.jpg",
-        "etc"
-      ]
+        "https://example.com/image2.jpg"
+      ],
+      "document_location": "https://example.com/chapter-256"
     }
   ]
 }
