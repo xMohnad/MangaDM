@@ -5,50 +5,46 @@ description = "A tool for downloading manga."
 authors = [{ name = "xMohnad" }]
 
 dependencies = [
-  "aiohttp>=3.12.13",
+  "aiohttp>=3.14.3",
   "dacite>=1.9.2",
-  "ebooklib>=0.19",
-  "pyyaml>=6.0.2",
-  "rich>=14.0.0",
-  "typer>=0.19.2",
+  "rich>=15.0.0",
+  "typer>=0.27.2",
 ]
 
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.10"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
 
 classifiers = [
   "Environment :: Console",
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Terminals",
   "Typing :: Typed",
 ]
 
-keywords = ["terminal"]
+keywords = ["manga", "downloader", "cbz", "epub", "cli"]
 
 [project.urls]
 Homepage = "https://github.com/xMohnad/MangaDM"
 Repository = "https://github.com/xMohnad/MangaDM"
 Issues = "https://github.com/xMohnad/MangaDM/issues"
 
+[project.scripts]
+mangadm = "mangadm.cli:app"
+
 [tool.uv]
 package = true
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [build-system]
 requires = ["uv_build>=0.11.30,<0.12"]
 build-backend = "uv_build"
-
-[project.scripts]
-mangadm = "mangadm.cli:app"
 
 [tool.ruff]
 line-length = 120
@@ -62,3 +58,4 @@ convention = "google"
 
 [tool.pyright]
 typeCheckingMode = "standard"
+pythonVersion = "3.11"
