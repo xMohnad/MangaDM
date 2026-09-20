@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING, Final
 
 import aiohttp
 
-from mangadm.download.model import DownloadError, PageUnavailableError
+from mangadm.download.model import DownloadError, NullTransferListener, PageUnavailableError
 from mangadm.download.provider import TMP_FILE_SUFFIX
 from mangadm.images import HEAD_SIZE, detect_extension
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
+
+    from mangadm.download.model import TransferListener
 
 logger = logging.getLogger(__name__)
 
@@ -72,12 +73,12 @@ class ImageFetcher:
         session: aiohttp.ClientSession,
         *,
         retries: int = 3,
-        on_bytes: Callable[[int], None] | None = None,
+        listener: TransferListener | None = None,
     ) -> None:
         """Initialize the fetcher."""
         self._session = session
         self._retries = retries
-        self._on_bytes = on_bytes
+        self._listener = listener or NullTransferListener()
 
     async def fetch(self, url: str, directory: Path, stem: str, *, referer: str | None = None) -> Path:
         """Download `url` into `directory` as `stem.<ext>` and return the final path.
@@ -115,11 +116,20 @@ class ImageFetcher:
             headers["Range"] = f"bytes={offset}-"
 
         async with self._session.get(url, headers=headers) as response:
-            with tmp.open("ab" if response.status == 206 else "wb") as f:
-                async for chunk in response.content.iter_chunked(CHUNK_SIZE):
-                    f.write(chunk)
-                    if self._on_bytes:
-                        self._on_bytes(len(chunk))
+            append = response.status == 206
+            completed = offset if append else 0
+            length = response.content_length
+            total = None if length is None else completed + length
+
+            transfer = self._listener.on_transfer_start(tmp.stem, total, completed)
+            try:
+                with tmp.open("ab" if append else "wb") as f:
+                    async for chunk in response.content.iter_chunked(CHUNK_SIZE):
+                        f.write(chunk)
+                        self._listener.on_transfer_advance(transfer, len(chunk))
+            finally:
+                self._listener.on_transfer_end(transfer)
+
             if tmp.stat().st_size == 0:
                 raise aiohttp.ClientPayloadError("empty response body")
             return response.content_type

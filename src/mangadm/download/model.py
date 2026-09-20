@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum, StrEnum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -23,6 +23,13 @@ class PageUnavailableError(DownloadError):
 
 class InsufficientSpaceError(DownloadError):
     """There is not enough free disk space to continue."""
+
+
+class ProgressStyle(StrEnum):
+    """Terminal progress display."""
+
+    compact = "compact"
+    detailed = "detailed"
 
 
 class DownloadState(Enum):
@@ -104,6 +111,7 @@ class Options:
     max_concurrent: int = 4
     retries: int = 3
     allow_missing: bool = False
+    progress: ProgressStyle = ProgressStyle.compact
 
 
 class Fetcher(Protocol):
@@ -132,3 +140,33 @@ class Notifier(Protocol):
     def on_chapter_done(self, download: Download) -> None:
         """Called when a chapter finishes, successfully or not."""
         ...
+
+
+class TransferListener(Protocol):
+    """Receives byte-level progress of single file transfers."""
+
+    def on_transfer_start(self, name: str, total: int | None, completed: int) -> int:
+        """Called when a transfer starts. Returns a handle for the other calls."""
+        ...
+
+    def on_transfer_advance(self, transfer: int, count: int) -> None:
+        """Called with the number of bytes just received."""
+        ...
+
+    def on_transfer_end(self, transfer: int) -> None:
+        """Called when a transfer ends, successfully or not."""
+        ...
+
+
+class NullTransferListener:
+    """Ignores transfer progress."""
+
+    def on_transfer_start(self, name: str, total: int | None, completed: int) -> int:
+        """Ignore the event."""
+        return 0
+
+    def on_transfer_advance(self, transfer: int, count: int) -> None:
+        """Ignore the event."""
+
+    def on_transfer_end(self, transfer: int) -> None:
+        """Ignore the event."""

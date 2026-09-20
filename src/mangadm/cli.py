@@ -13,6 +13,7 @@ from rich.logging import RichHandler
 from mangadm import __version__
 from mangadm.archive import FormatType
 from mangadm.config import CONFIG_PATH, load_config
+from mangadm.download.model import DownloadState, Options, ProgressStyle
 from mangadm.manga import Manga
 
 app: typer.Typer = typer.Typer(
@@ -100,6 +101,14 @@ def download(
         int,
         typer.Option("--retries", "-r", help="Number of [bold cyan]retries[/] for a failed page.", min=0),
     ] = 3,
+    progress: Annotated[
+        ProgressStyle,
+        typer.Option(
+            "--progress",
+            "-P",
+            help="[bold cyan]Progress[/] display: compact, or detailed with a bar for each downloading page.",
+        ),
+    ] = ProgressStyle.compact,
     allow_missing: Annotated[
         bool,
         typer.Option(
@@ -110,7 +119,6 @@ def download(
 ) -> None:
     """[bold cyan]Download[/] manga from a given JSON metadata file."""
     from mangadm.download.api import download_manga
-    from mangadm.download.model import DownloadState, Options
     from mangadm.download.notifier import print_summary
 
     try:
@@ -128,6 +136,7 @@ def download(
         max_concurrent=max_concurrent,
         retries=retries,
         allow_missing=allow_missing,
+        progress=progress,
     )
     downloads = asyncio.run(download_manga(manga, options))
     print_summary(downloads)
