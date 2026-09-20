@@ -22,8 +22,8 @@ _CONTAINER: Final = """<?xml version="1.0" encoding="UTF-8"?>
 </container>
 """
 
-_STYLE: Final = """html, body { margin: 0; padding: 0; background: #000; }
-img { display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; object-fit: contain; }
+_STYLE: Final = """html, body { margin: 0; padding: 0; background: #000; line-height: 0; font-size: 0; }
+img { display: block; margin: 0 auto; width: 100%; height: auto; max-width: 100%; padding: 0; }
 """
 
 _PAGE: Final = """<?xml version="1.0" encoding="UTF-8"?>
@@ -34,7 +34,7 @@ _PAGE: Final = """<?xml version="1.0" encoding="UTF-8"?>
   <title>{title}</title>
   <link rel="stylesheet" type="text/css" href="../style.css"/>
 </head>
-<body><img src={src} alt=""/></body>
+<body>{images_html}</body>
 </html>
 """
 
@@ -84,21 +84,24 @@ def _metadata(details: MangaDetails) -> str:
 
 
 def write_epub(dest: Path, pages: Sequence[Path], details: MangaDetails, chapter: Chapter) -> None:
-    """Write pages into an EPUB 3 file with one XHTML page per image."""
-    title = escape(f"{chapter.title}")
+    """Write pages into an EPUB 3 file formatted for continuous vertical Webtoon scrolling."""
+    title = escape(chapter.title)
     key = chapter.document_location or f"{details.source}/{details.title}/{chapter.title}"
 
     manifest: list[str] = []
-    spine: list[str] = []
+    spine: list[str] = ['    <itemref idref="chapter-page"/>']
+    manifest.append('    <item id="chapter-page" href="pages/chapter.xhtml" media-type="application/xhtml+xml"/>')
+
+    images_html_list: list[str] = []
     for index, page in enumerate(pages):
         cover = ' properties="cover-image"' if index == 0 else ""
         manifest.append(
-            f'    <item id="page-{page.stem}" href="pages/{page.stem}.xhtml" media-type="application/xhtml+xml"/>'
-        )
-        manifest.append(
             f'    <item id="img-{page.stem}" href="images/{page.name}" media-type="{media_type(page)}"{cover}/>'
         )
-        spine.append(f'    <itemref idref="page-{page.stem}"/>')
+        src = quoteattr(f"../images/{page.name}")
+        images_html_list.append(f'  <img src={src} alt="" />')
+
+    images_html = "\n".join(images_html_list)
 
     package = _PACKAGE.format(
         book_id=uuid.uuid5(uuid.NAMESPACE_URL, key),
@@ -114,15 +117,16 @@ def write_epub(dest: Path, pages: Sequence[Path], details: MangaDetails, chapter
         for name, content in {
             "META-INF/container.xml": _CONTAINER,
             "OEBPS/content.opf": package,
-            "OEBPS/nav.xhtml": _NAV.format(title=title, first=quoteattr(f"pages/{pages[0].stem}.xhtml")),
+            "OEBPS/nav.xhtml": _NAV.format(title=title, first=quoteattr("pages/chapter.xhtml")),
             "OEBPS/style.css": _STYLE,
         }.items():
             zf.writestr(name, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        zf.writestr(
+            "OEBPS/pages/chapter.xhtml",
+            _PAGE.format(title=title, images_html=images_html),
+            compress_type=zipfile.ZIP_DEFLATED,
+        )
+
         for page in pages:
-            src = quoteattr(f"../images/{page.name}")
-            zf.writestr(
-                f"OEBPS/pages/{page.stem}.xhtml",
-                _PAGE.format(title=title, src=src),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
             zf.write(page, f"OEBPS/images/{page.name}")
